@@ -1,0 +1,134 @@
+SHELL = /bin/sh
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+
+i_bindir = $(install_root)@bindir@
+i_mandir = $(install_root)@mandir@/man1
+
+CC = @CC@
+CPP = @CPP@
+CFLAGS = @CFLAGS@
+CPPFLAGS = @DEFS@ @CPPFLAGS@ @X_CFLAGS@ -I.
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
+LDFLAGS = @LDFLAGS@ @X_LIBS@
+
+vgalib = @vgalib@
+xlibs = @xlibs@
+rllibs = @rllibs@
+aulibs = @aulibs@
+
+xspect_libs = $(xlibs) $(rllibs) $(aulibs)
+vgaspect_libs = $(vgalib) $(rllibs) $(aulibs)
+
+
+.SUFFIXES:
+.SUFFIXES: .c .o .s .bin
+
+.c.o:
+	$(CC) -c $(CFLAGS) $(CPPFLAGS) $<
+
+.c.s:
+	$(CC) -S $(CFLAGS) $(CPPFLAGS) $<
+
+.bin.c:
+	./bin_to_c $<
+
+progs = @progs@
+
+all: $(progs)
+
+installdirs:
+	./mkinstalldirs $(i_bindir) $(i_mandir)
+
+install_prog: $(progs)
+	if test -f xspect; then \
+	   $(INSTALL_PROGRAM) -s -m 755 xspect $(i_bindir); fi
+	if test -f vgaspect; then \
+	   $(INSTALL_PROGRAM) -s -m 4755 vgaspect $(i_bindir); fi
+
+install_man:
+	$(INSTALL_DATA) ./xspect.1 $(i_mandir)
+	$(INSTALL_DATA) ./tapeout.1 $(i_mandir)
+	(cd $(i_mandir); rm -f vgaspect.1; ln -s xspect.1 vgaspect.1)
+
+install: installdirs install_prog install_man
+
+z80_c_objs=z80.o z80optab.o z80_step.o spperif.o spect.o rom48.o \
+           z80_op1.o z80_op2.o z80_op3.o z80_op4.o z80_op5.o z80_op6.o
+
+z80_i386_objs=z80.o spperif.o rom48.o i386emul.o
+
+spect_objs=spmain.o spscr.o spkey.o spsound.o sptape.o tapefile.o \
+           snapshot.o compr.o sptiming.o interf.o misc.o spconf.o \
+           load_z80.o keynames.o spjoy.o memdmps.o scrshot.o \
+           $(@z80objs@)
+
+xspect_objs=xspect.o xscr.o xutils.o xkey.o \
+            ax.o spectkey.o xdispkb.o $(spect_objs)
+
+xspect: $(xspect_objs)
+	$(CC) -o xspect $(LDFLAGS) $(xspect_objs) $(xspect_libs)
+
+vgaspect_objs=vgaspect.o vgascr.o vgakey.o  $(spect_objs)
+vgaspect: $(vgaspect_objs)
+	$(CC) -o vgaspect $(LDFLAGS) $(vgaspect_objs) $(vgaspect_libs)
+
+
+tapeout_objs=tapeout.o tapefile.o misc.o
+tapeout: $(tapeout_objs)
+	$(CC) -o tapeout $(LDFLAGS) $(tapeout_objs)
+
+i386emul.sp: ./i386step.S
+	$(CPP) $(CPPFLAGS) ./i386step.S > i386emul.sp
+
+i386emul.s: i386emul.sp sp_to_s
+	./sp_to_s < i386emul.sp > i386emul.s
+
+i386emul.o: i386emul.s
+	$(CC) -c $(CFLAGS) i386emul.s
+
+sp_to_s: sp_to_s.o
+	$(CC) -o sp_to_s $(LDFLAGS) sp_to_s.o
+
+bin_to_c: bin_to_c.o
+	$(CC) -o bin_to_c $(LDFLAGS) bin_to_c.o
+
+clean:
+	rm -f xspect vgaspect tapeout
+	rm -f *.sp z80*.s i386emul.s bin_to_c sp_to_s
+	rm -f spectkey.c rom48.c load_z80.c
+	rm -f `find . \( -name "*.o" -o -name "*.a"  -o -name ".*~" -o \
+                         -name "*~" -o -name "*.orig" -o -name t -o  \
+                         -name core \) -print`
+	rm -f Makefile.old gmon.out
+
+distclean: clean
+	rm -f config.status config.cache config.log
+	rm -f Makefile */Makefile config.h
+	rm -f TAGS
+
+depend:
+	cp -f Makefile Makefile.old
+	sed '/^# DO NOT REMOVE THIS LINE/q' < Makefile.old > Makefile
+	gcc -MM $(CPPFLAGS) *.c >> Makefile
+
+
+i386emul.sp: i386def.S i386sp.S i386step.S 
+i386emul.sp: i386op1.S i386op1x.S i386op2.S i386op2x.S
+i386emul.sp: i386op3.S i386op3x.S i386op4.S
+i386emul.sp: i386op5.S i386op6.S 
+i386emul.sp: config.h
+
+load_z80.c:  bin_to_c
+spectkey.c:  bin_to_c
+rom48.c:     bin_to_c
+rom128_0.c:  bin_to_c
+rom128_1.c:  bin_to_c
+
+
+FORCE:
+
+# DO NOT REMOVE THIS LINE, OR "make depend" WILL NOT WORK

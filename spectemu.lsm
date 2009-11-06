@@ -1,0 +1,21 @@
+Begin3
+Title:          spectemu
+Version:        0.94
+Entered-date:   18MAY98
+Description:    Sinclair 48k ZX Spectrum emulator (very fast)
+                  - Console graphics with SVGALIB      (Linux only)
+                  - X11 (also MITSHM) graphics
+                  - Snapshot saving and loading
+                  - Sound emulation                    (Linux and Sun)
+                  - Tape emulation
+Keywords:       spectrum ZX emulator Sinclair svgalib games
+Author:         mszeredi@inf.bme.hu (SZEREDI Miklos)
+Maintained-by:  mszeredi@inf.bme.hu (SZEREDI Miklos)
+Primary-site:   http://www.inf.bme.hu/~mszeredi/spectemu/
+                        190k    spectemu-0.94.tar.gz
+                          1k    spectemu.lsm
+Alternate-site: tsx-11.mit.edu /pub/linux/ALPHA/spectemu
+Alternate-site: sunsite.unc.edu /pub/Linux/system/emulators/zx
+Platforms:      Linux, Solaris, Alpha, Irix, FreeBSD, (DOS experimental) ...
+Copying-policy: GPL
+End

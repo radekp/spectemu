@@ -1,0 +1,171 @@
+Release date: 15 June 1995
+-------------------------------------------------------------------------------
+Spconv can now convert .SNX files. These are the eXtended SNApshot files used
+by one of the Atari ST Spectrum emulators. They contain a header very similar
+to the SNA format, but use RLE compression on the (48K only) RAM image to
+obtain a smaller file, much like .Z80 files.
+
+Please note: this is not a version released by Henk, but by me, Damien Burke
+(D.M.Burke-CSSE94@cs.bham.ac.uk or CCS4DMB1@ibm3090.bham.ac.uk). If you have
+any problems converting to/from .SNX format, don't complain to Henk, complain
+to me!
+
+Release number of spconv updated from 1.08 to 1.09.
+-------------------------------------------------------------------------------
+
+Release date: 31 may 1995
+-------------------------------------------------------------------------------
+Spconv can now convert .Z80 files of 3.0 format. Spconv should have warned
+the user that the .Z80 file had a new format but instead the test failed due
+to a mistake from me (aka bug). Spconv proceeded as if it was a .Z80 2.01
+file. Due to miss-alignment warnings about unhandled and illegal memory
+banks were given instead.
+
+I changed the test. I also made the code dynamic so it will issue a warning
+about a new .Z80 format but will attempt to convert it anyway. If Gerton
+sticks to the current scheme it should work in the future (but you have to
+live with the warning though, unless you patch it out yourself :-) ).
+
+Other changes:
+- I should have removed #include <malloc.h> in the cleanup action of 1.07,
+  I forgot it and GCC in pedantic setting gave a warning. I corrected this
+  very important bug :-)
+
+Release number of spconv updated from 1.07 to 1.08
+-------------------------------------------------------------------------------
+
+Release date: 03 may 1994
+-------------------------------------------------------------------------------
+This version has a better conversion to .ACH files. Help was given by a sample
+.sna to .ach converter program and an archimedes snapshot snapped just after
+startup.
+
+Other changes:
+- Cleanup of code. Make it gcc-pedantic mode proof (thanks Chris Wells).
+- Inclusion of UNIX make-file (thanks to Chris Wells again).
+- Inclusion of UNIX style man page (thanks to (guess who...) Chris Wells!).
+- Make definition of exit-codes clear and consistent.
+- Add some more comments in the code.
+- Replace "sizeof" operator by #defines - needed for some environments
+- Tell about the exit-codes in the documentation.
+- Rearrange the doc file.
+
+Release number of spconv updated from 1.06 to 1.07
+-------------------------------------------------------------------------------
+
+Release date: 23 januari 1994
+-------------------------------------------------------------------------------
+This version will cope with .Z80 files written by Z80-201. The .Z80 format was
+changed to enable its use for 128K snapshots. Spconv will be able to read
+and convert this format. The output .Z80 files are in the old format so they
+can be read by old and new Z80 emulator versions. You can use Spconv also
+to convert the new-style .Z80 files to the old style so you can use it with
+your old (probably registered) version of Z80. Spconv will check if the
+input .Z80 file is for a 48K Spectrum.
+
+The code is a little bit reorganized. The number of "if, else if, else if..."
+began to look rediculous - as if I never heard from 'switch/case'. Well I have
+and I changed it now. The new .Z80 format forced me to execute read system
+calls with a low number of bytes. They started to get expensive so I changed
+everything to <stdio.h> file I/O. The Z80 uncompress routine should be
+faster now because I don't need an intermediate buffer anymore. I still need
+one for compression so I can output an uncompressed image if the compression
+actualy expands the file... Maybe I'll change that too in the future and take
+expansion of worst-case files (files with a lot of '0xed,0xed,0x00' sequences)
+for granted.
+
+Now I hope I didn't break anything...
+
+Release number of spconv updated from 1.05 to 1.06
+-------------------------------------------------------------------------------
+
+Release date: 10 november 1993
+-------------------------------------------------------------------------------
+This is a maintenance version. The conversion to/from .zx files should be much
+better now thanks to info from Peter McGavin. The code is cleaned up, at some
+places Intel byte-ordering was assumed. Also the use of 'far' pointers are
+moved into #ifdef __TURBOC__ conditions, compiling under UNIX should not be
+bothered by it anymore. All functions have prototypes and similar functions
+are grouped together. The snapshot structures and prototypes are moved to
+a .h file. Turbo-C++ 1.0 in it's most pedantic mode produces no warnings
+anymore. I did not split-up the spconv.c file further, I should because its
+growing to big already but I like building it without needing a Turbo-C
+project file for Turbo-C's IDE environment.
+
+Release number of spconv updated from 1.04 to 1.05
+-------------------------------------------------------------------------------
+
+Release date: 17 may 1993
+-------------------------------------------------------------------------------
+This version can also convert to/from .zx files. These files are used in the
+KGB emulator for the amiga computer. It's not fool proof, some registers are
+not found in the KGB snapshot.
+
+Release number of spconv updated from 1.03 to 1.04
+-------------------------------------------------------------------------------
+
+Release date: 26 february 1993
+-------------------------------------------------------------------------------
+This version can also convert to/from .ach files. These files are used in an
+emulator for the archimedes computer. Normaly the files are .arc files but
+the extension .arc is already used for ARC archives so I used .ach instead.
+
+Release number of spconv updated from 1.02 to 1.03
+-------------------------------------------------------------------------------
+
+Release date: 14 december 1992
+-------------------------------------------------------------------------------
+This version can also convert to/from .prg files. These files are used in an
+Irish emulator. While building it, some ideas came up to enhance the converion
+to/from .SP files (recognition of IM2).
+
+Upgraded call of the program, the program can now take only a suffix as second
+agrument, the prefix for the first argument is used. This enables easy mass
+conversion by using a batchfile with a command like:
+
+	'for %%i in (*.z80) do spconv %%i .sna'
+
+If wildcards are given at the commandline a error is generated.
+
+Release number of spconv updated from 1.01 to 1.02
+-------------------------------------------------------------------------------
+
+Release date: 13 august 1992
+-------------------------------------------------------------------------------
+Error discoved in the way IFF was handled for Z80. This bug prevented correct
+conversion of some programs from .SNA to .Z80.
+
+Release number of spconv updated from 1.0 to 1.01
+-------------------------------------------------------------------------------
+
+Release date: 10 august 1992
+-------------------------------------------------------------------------------
+The new SPCONV has a big bug. It will not convert compressed .Z80 files
+correctly. The program uses JPP format internaly. For JPP the program
+counter is on the stack. The converter stored the PC in the image
+*BEFORE* it was de-compressed. This resulted in corrupting other image data.
+(Converting TO .Z80 works fine).
+
+Due to errors I am planning to keep versions more carefully. From now on
+SPCONV has a release number and a generation date. This will show up if
+you run SPCONV without arguments.
+-------------------------------------------------------------------------------
+
+Release date: 5 august 1992
+-------------------------------------------------------------------------------
+SPCONV : Now handles .Z80 files and new format of .SP. Old format still
+	 supported.
+
+Bug fixes:
+
+General: Clear compilation of all programs under Turbo-C 2.0
+
+Documentation up to date.
+-------------------------------------------------------------------------------
+
+Release date: ? ???? ????
+-------------------------------------------------------------------------------
+Initial program to convert between .SNA .SP and RAW. No more history.
+-------------------------------------------------------------------------------
+
+H. de Groot,  hegr@ensae.ericsson.se

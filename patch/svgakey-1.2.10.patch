@@ -1,0 +1,48 @@
+*** keyboard.c.old	Tue Sep 24 19:01:47 1996
+--- keyboard.c	Tue Sep 24 19:03:15 1996
+***************
+*** 211,227 ****
+  	    /* VT switch. */
+  	    /* *** what about F11 & F12? */
+  	    int j, vt = 0;
+  	    for (j = 0; j < 10; j++)
+  		if (functionkey_state & (1 << j)) {
+  		    vt = j + 1;
+  		    break;
+  		}
+! 	    /*
+! 	     * This will generate a signal catched by
+! 	     * svgalib to restore textmode.
+! 	     */
+! 	    ioctl(__svgalib_tty_fd, VT_ACTIVATE, vt);
+! 	    return 1;
+  	}
+  	__keyboard_eventhandler(buf[i] & 0x7f,
+  		    (buf[i] & 0x80) ? KEY_EVENTRELEASE : KEY_EVENTPRESS);
+--- 211,236 ----
+  	    /* VT switch. */
+  	    /* *** what about F11 & F12? */
+  	    int j, vt = 0;
++ 	    struct vt_stat vts;
+  	    for (j = 0; j < 10; j++)
+  		if (functionkey_state & (1 << j)) {
+  		    vt = j + 1;
+  		    break;
+  		}
+! 
+! 	    /* Do not switch vt's if need not to */
+! 	    ioctl(__svgalib_tty_fd, VT_GETSTATE, &vts);
+! 
+! 	    if(vt != vts.v_active) { 
+! 	      /* if switching vt's, need to clear keystates */
+! 	      keyboard_clearstate();
+! 	      /*
+! 	       * This will generate a signal catched by
+! 	       * svgalib to restore textmode.
+! 	       */
+! 	      ioctl(__svgalib_tty_fd, VT_ACTIVATE, vt);
+! 	      return 1;
+! 	    }
+  	}
+  	__keyboard_eventhandler(buf[i] & 0x7f,
+  		    (buf[i] & 0x80) ? KEY_EVENTRELEASE : KEY_EVENTPRESS);

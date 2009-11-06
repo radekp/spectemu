@@ -1,0 +1,302 @@
+dnl Process this file with autoconf to produce a configure script.
+AC_INIT(z80.c)
+AC_CONFIG_HEADER(config.h)
+
+dnl Check if on the same host if reconfiguring
+
+AC_CANONICAL_HOST
+
+AC_MSG_CHECKING([if configuration is valid])
+AC_CACHE_VAL(szm_cv_host_system, [szm_cv_host_system=$host])
+if test "$host" = "$szm_cv_host_system"; then
+  validstring="valid"
+else
+  validstring="invalid"
+fi
+AC_MSG_RESULT([$validstring])
+if test "$validstring" = invalid; then
+  AC_MSG_ERROR([type 'make distclean' before running configure])
+fi
+
+dnl Checks for programs.
+cflags="$CFLAGS"
+AC_PROG_CC
+AC_PROG_CPP
+AC_PROG_INSTALL
+AC_PROG_RANLIB
+
+if test -z "$cflags"; then
+   if test "$GCC" = yes; then
+      CFLAGS="-Wall -W -O3 -fomit-frame-pointer -funroll-loops"
+   else
+      CFLAGS="-O"
+   fi
+fi
+
+AC_C_INLINE
+
+progs=""
+dnl -----------------------------------------------------------
+dnl Checks X availability
+dnl -----------------------------------------------------------
+
+X_CFLAGS=
+X_LIBS=
+
+olibs="$LIBS"
+
+AC_PATH_X
+if test  "$no_x" != yes; then
+   progs="$progs xspect"
+
+   if test -n "$x_includes"; then
+      X_CFLAGS="-I$x_includes"
+   fi
+
+   if test -n "$x_libraries"; then
+      X_LIBS="-L$x_libraries"
+   fi
+
+   oldldflags="$LDFLAGS"
+   LDFLAGS="$LDFLAGS $X_LIBS"
+  
+   AC_CHECK_LIB(X11, XOpenDisplay, onlylibx=yes)
+   if test "$onlylibx" != yes; then
+      AC_CHECK_LIB(Xbsd, main, [alibs="-lXbsd $alibs"])
+      AC_CHECK_LIB(seq, getmntent, [alibs="-linet -lnsl -lseq $alibs"])
+      AC_CHECK_LIB(dnet, dnet_ntoa, [alibs="-ldnet $alibs"])
+      if test $ac_cv_lib_dnet_dnet_ntoa = no; then
+        AC_CHECK_LIB(dnet_stub, dnet_ntoa, [alibs="-ldnet_stub $alibs"])
+      fi
+      LIBS="$alibs $olibs"
+
+      tocheck_both=0
+      AC_CHECK_FUNC(connect, tocheck_socket=0, tocheck_socket=1)  
+      if test "$tocheck_socket" = 1; then
+         AC_CHECK_LIB(socket, connect, alibs="-lsocket $alibs", tocheck_both=1)
+      fi
+
+      if test "$tocheck_both" = 1; then
+         LIBS="-lsocket -lnsl $alibs $olibs"
+         AC_CHECK_FUNC(accept, alibs="-lsocket -lnsl $alibs")
+      fi
+      LIBS="$alibs $olibs"
+
+      AC_CHECK_FUNC(gethostbyname, tocheck_nsl=0, tocheck_nsl=1)
+      if test "$tocheck_nsl" = 1; then
+         AC_CHECK_LIB(nsl, gethostbyname, alibs="$alibs -lnsl")
+      fi
+
+      AC_CHECK_FUNC(remove)
+      if test $ac_cv_func_remove = no; then
+         AC_CHECK_LIB(posix, remove, alibs="$alibs -lposix")
+      fi
+
+      AC_CHECK_FUNC(shmat)
+      if test $ac_cv_func_shmat = no; then
+         AC_CHECK_LIB(ipc, shmat, alibs="$alibs -lipc")
+      fi
+   fi  
+   alibs="-lX11 $alibs"
+   LIBS="$alibs $olibs"
+
+   AC_CHECK_LIB(Xext, XShmCreateImage, 
+                alibs="-lXext $alibs"
+		AC_DEFINE(HAVE_MITSHM))
+   LIBS="$alibs $olibs"
+
+   AC_CHECK_FUNC(XShmQueryExtension, AC_DEFINE(HAVE_SHMQUERY))
+
+dnl Note the this depends also on Xext...
+   AC_CHECK_LIB(Xxf86vm, XF86VidModeQueryExtension,
+		alibs="-lXxf86vm $alibs"
+		AC_DEFINE(HAVE_XF86VIDMODE))
+   LIBS="$alibs $olibs"
+   xlibs="$LIBS"
+   LDFLAGS="$oldldflags"
+fi
+
+LIBS="$olibs"
+
+dnl -----------------------------------------------------------
+dnl Check for SVGALIB
+dnl -----------------------------------------------------------
+AC_CHECK_LIB(vga, vga_setmode, no_vga="", no_vga=yes)
+if test "$no_vga" != yes; then
+   progs="$progs vgaspect"
+   vgalib=-lvga
+
+   LIBS="$vgalib $olibs"
+   AC_CHECK_FUNC(vga_runinbackground_version, AC_DEFINE(RUN_IN_BACKGROUND))
+fi
+
+LIBS="$olibs"
+
+dnl -----------------------------------------------------------
+dnl Check for libreadline
+dnl -----------------------------------------------------------
+
+rllibs=""
+withrl=yes
+AC_ARG_WITH(readline, 
+[  --with-readline         Compile with readline library], 
+[if test "$withval" = no; then withrl=no; fi])
+
+if test "$withrl" = yes; then
+  AC_CHECK_LIB(termcap, tgetent, termcaplib="-ltermcap", 
+    [AC_CHECK_LIB(ncurses, tgetent, termcaplib="-lncurses")])
+
+  AC_CHECK_LIB(readline, readline, have_rl=yes, have_rl=no, "$termcaplib")
+  if test "$have_rl" = yes; then
+    AC_CHECK_HEADER(readline/readline.h, [
+      AC_DEFINE(HAVE_READLINE)
+      rllibs="-lreadline $termcaplib"], [
+      AC_MSG_WARN([make sure 'readline.h' is in a 'readline' subdirectory])])
+  fi
+fi
+
+dnl -----------------------------------------------------------
+dnl Check if compiling on Intel architecture
+dnl -----------------------------------------------------------
+intelarch=""
+
+AC_ARG_WITH(i386asm, 
+[  --with-i386asm          Compile with intel i386 assembly code], 
+[if test "$withval" = yes; then intelarch=yes; else intelarch=no; fi])
+
+AC_MSG_CHECKING([whether compiling with intel x86 assembly])
+if test -z "$intelarch"; then
+  case "$host_cpu" in
+     i[[3-9]]86) intelarch=yes ;;
+     *)          intelarch=no ;;
+  esac
+fi
+AC_MSG_RESULT($intelarch)
+
+if test "$intelarch" = yes; then
+   z80objs=z80_i386_objs
+
+   AC_MSG_CHECKING([whether using inline assembly code])
+   if test "$GCC" = yes; then
+      inlineasm=yes
+      AC_DEFINE(I386_ASM)
+   else
+      inlineasm=no
+   fi
+   AC_MSG_RESULT($inlineasm)
+
+   link_asm='${CC-cc} -o conftest $CFLAGS $CPPFLAGS $LDFLAGS conftest.s $LIBS 1>&AC_FD_CC'
+
+   AC_CACHE_CHECK([for underscores before function names in assembly], 
+                  szm_cv_underscore_prefix,
+[cat > conftest.s <<EOF
+	.text
+	.globl main
+main:	
+	
+EOF
+   if AC_TRY_EVAL(link_asm) && test -s conftest; then
+      rm -rf conftest*
+      szm_cv_underscore_prefix=no
+   else
+      echo "configure: failed program was:" >&AC_FD_CC
+      cat conftest.s >&AC_FD_CC
+      rm -rf conftest*
+      szm_cv_underscore_prefix=yes
+   fi
+   ])
+   if test "$szm_cv_underscore_prefix" = yes; then
+      AC_DEFINE(AOUT_FORMAT) 
+   fi
+else
+   z80objs=z80_c_objs
+   AC_DEFINE(Z80C)
+fi
+
+dnl -----------------------------------------------------------
+dnl Check for sound driver
+dnl -----------------------------------------------------------
+aulibs=
+AC_CHECK_HEADER(sys/soundcard.h, oss=yes, oss=no)
+AC_CHECK_HEADER(sys/audioio.h, sunss=yes, sunss=no)
+AC_CHECK_HEADER(dmedia/audio.h, irixss=yes, irixss=no)
+if test "$sunss" = yes; then
+  AC_CACHE_CHECK([for definitions in sys/audioio.h], szm_cv_defines_sys_audioio,
+  [AC_EGREP_CPP(sun_audioio_header, 
+               [#include <sys/audioio.h>
+                #if defined(AUDIO_SETINFO) && defined(AUDIO_ENCODING_ULAW)
+                   sun_audioio_header
+                #endif
+               ], szm_cv_defines_sys_audioio=yes, szm_cv_defines_sys_audioio=no)
+  ])
+  if test $szm_cv_defines_sys_audioio = no; then
+    sunss=no
+  fi
+fi
+
+if test "$oss" = yes; then
+   AC_DEFINE(HAVE_SOUND)
+   AC_DEFINE(OSS_SOUND)
+elif test "$sunss" = yes; then
+   AC_DEFINE(HAVE_SOUND)
+   AC_DEFINE(SUN_SOUND)
+elif test "$irixss" = yes; then
+   AC_DEFINE(HAVE_SOUND)
+   AC_DEFINE(IRIX_SOUND)
+   aulibs=-laudio
+fi
+
+dnl -----------------------------------------------------------
+dnl Check for pc-speaker sound
+dnl -----------------------------------------------------------
+
+AC_CHECK_HEADER(asm/io.h, pcspk=yes, pcspk=no)
+if test "$pcspk" = yes; then
+   AC_CHECK_FUNC(ioperm, pcspk=yes, pcspk=no)  
+fi
+if test "$pcspk" = yes; then
+   AC_DEFINE(PCSPEAKER_SOUND)
+fi
+
+dnl -----------------------------------------------------------
+dnl Check for linux joystick driver
+dnl -----------------------------------------------------------
+
+AC_CHECK_HEADER(linux/joystick.h, linjoy=yes, linjoy=no)
+if test "$linjoy" = yes; then
+   AC_DEFINE(LINUX_JOYSTICK)
+fi
+
+dnl -----------------------------------------------------------
+dnl Misc
+dnl -----------------------------------------------------------
+
+AC_DEFINE(SPECT_MEM)
+
+AC_C_BIGENDIAN
+
+dnl Checks for header files.
+dnl AC_HEADER_STDC
+dnl AC_CHECK_HEADERS(fcntl.h sys/ioctl.h sys/time.h unistd.h)
+
+dnl Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+AC_TYPE_SIZE_T
+dnl AC_HEADER_TIME
+
+dnl Checks for library functions.
+dnl AC_PROG_GCC_TRADITIONAL
+dnl AC_TYPE_SIGNAL
+dnl AC_CHECK_FUNCS(gettimeofday select strerror)
+
+
+AC_SUBST(vgalib)
+AC_SUBST(xlibs)
+AC_SUBST(rllibs)
+AC_SUBST(aulibs)
+AC_SUBST(progs)
+AC_SUBST(z80objs)
+AC_SUBST(X_LIBS)
+AC_SUBST(X_CFLAGS)
+
+AC_OUTPUT(Makefile)

@@ -1,0 +1,91 @@
+.TH Spectemu 1 "18 May 1998" "Version 0.99"
+.SH NAME
+xspect, vgaspect \- ZX Spectrum emulator
+.SH SYNOPSIS
+.B xspect
+.RI [ options ]
+.RI [[ filetype ] 
+.IR filename ]
+.PP
+.B vgaspect
+.RI [ options ]
+.RI [[ filetype ] 
+.IR filename ]
+.SH DESCRIPTION
+Spectemu is a 48k Sinclair ZX Spectrum emulator for Linux and other
+UNIX operating systems.
+.PP
+The program
+.I xspect
+can be started in X11, and opens up a window to
+display the screen of the Spectrum. Do not start 
+.I xspect
+in the background, because it uses the terminal to read filenames, and
+to print information on the state of the emulator.
+.PP
+The
+.I vgaspect
+program can only be started on a Linux console, and uses the SVGALIB
+library. On non linux systems this program is not available. 
+.SH OPERANDS
+For both 
+.I xspect
+and
+.I vgaspect
+a snapshot file or a tape file can be specified on the command
+line. The file can have the extension
+.I .z80
+, 
+.I .sna
+,
+.I .tap
+or
+.I .tzx
+(the extension can be ommitted). 
+.PP
+The option
+.I -help
+displays a list of available options. For a more complete list, and
+description see the file README. 
+.PP
+For
+.I xspect
+The following options also have meaning:
+.TP
+.B \-display DISPLAYNAME
+Open the window on DISPLAYNAME instead of the default
+.TP
+.B \-name WINDOWNAME
+Change the title of the window to WINDOWNAME
+.SH KEYS
+You can press Ctrl\-H to get help on what keys to use.
+.PP
+For more information on the features available in Spectemu see the
+file README distributed with the emulator. 
+.SH SEE ALSO
+tapeout(1)
+.PP
+http://www.inf.bme.hu/~mszeredi/spectemu/spectemu.html
+.SH BUGS
+I try to keep nasty bugs like "Segmentation Fault" out of Spectemu,
+so if you notice one, STEP ON IT! There are some cuter and gentler
+bugs, which are kept in Spectemu to amuse the user (see TODO).
+.SH AUTHOR
+Miklos Szeredi (EMAIL: mszeredi@inf.bme.hu)
+.PP
+Spectemu is copyright (C) 1996\-2004 Miklos Szeredi
+.PP
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version. See the file COPYING. 
+.PP
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+.PP
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+

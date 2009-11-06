@@ -1,0 +1,69 @@
+.TH Tapeout 1 "17 March 1998" "Version 0.94"
+.SH NAME
+tapeout \- Output tapefiles to real tape
+.SH SYNOPSIS
+.B tapeout
+.I sample_rate
+.I tapefile
+.RI [ start_block 
+.RI [ output_file ]]
+.SH DESCRIPTION
+This program lets you copy a tapefile (
+.I .tap 
+or 
+.I .tzx
+) to real tape 
+via soundcard. 
+.PP
+You have to connect the soundcard's 
+.B line out
+socket with the tape recorder's
+.B mic
+socket, then start this program. 
+.SH OPERANDS
+.TP
+.B sample_rate
+Sampling rate for the output. The higher this is, the better quality the
+the result will be. It should be at least 16000.
+.TP
+.B tapefile
+Name of the tape file to interpret, and output to the soundcard. It should
+have either 
+.I .tap
+or 
+.I .tzx
+extension.
+.TP
+.B start_block
+Specifies where to start playing the tapefile. Default is 0.
+.TP
+.B output_file
+If given, the program writes the sound output into this file instead of the
+soundcard. 
+.SH SEE ALSO
+xspect (1), vgaspect (1)
+.PP
+http://www.inf.bme.hu/~mszeredi/spectemu/spectemu.html
+.SH BUGS
+Many parameters are not changeable (like pause between tape blocks).
+.PP
+Not interactive (except for Ctrl\-c).
+.SH AUTHOR
+Miklos Szeredi (EMAIL: mszeredi@inf.bme.hu)
+.PP
+Tapeout is copyright (C) 1998 Miklos Szeredi
+.PP
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version. See the file COPYING. 
+.PP
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+.PP
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+

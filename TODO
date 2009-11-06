@@ -1,0 +1,37 @@
+General:
+ - improve man page
+ - ? automatic frame rate / sound buffer size
+ - show processor usage
+ - implement pokes
+
+Tape:
+ - Loading from real tape
+
+Snapshot:
+ - Load .dat files
+
+Screen:
+  - better z80_mem -> image conversion 
+  - on screen menus
+  - ? monochrome displays
+  - if memory problems while resizing do not exit
+  - only update if necessary (border updatate cleanup)
+  - Fix: bug if byte_order of client != byte_order of server
+
+Z80 emulation:
+ - implement all known undocumented instructions
+ - optimize LD*R CP*R IN*R OT*R instructions
+
+I/O emulation:
+ - EVEN better timing for memory read/write (see aquaplane)
+   
+DOS Port:
+ - sound support
+ - ? use allegro's keyboard handling
+
+
+Future plans (after version 1.0):
+ - spectrum 128
+ - AY8192 emulation
+ - ? "mouse" joystick
+

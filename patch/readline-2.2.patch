@@ -1,0 +1,17 @@
+This patch removes '@' from the list of separator charaters for file name
+completion. This makes readline able to complete filenames in virtual
+(AVFS) files. 
+
+--- complete.c~	Thu Jan 29 21:19:46 1998
++++ complete.c	Sun Jan 10 14:22:45 1999
+@@ -176,8 +176,8 @@
+ 
+ /* The basic list of characters that signal a break between words for the
+    completer routine.  The contents of this variable is what breaks words
+-   in the shell, i.e. " \t\n\"\\'`@$><=" */
+-char *rl_basic_word_break_characters = " \t\n\"\\'`@$><=;|&{(";
++   in the shell, i.e. " \t\n\"\\'`$><=" */
++char *rl_basic_word_break_characters = " \t\n\"\\'`$><=;|&{(";
+ 
+ /* List of basic quoting characters. */
+ char *rl_basic_quote_characters = "\"'";

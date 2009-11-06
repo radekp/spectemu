@@ -1,0 +1,99 @@
+CC = gcc
+CPP = $(CC) -E
+CFLAGS = -Wall -O2 -funroll-loops
+CPPFLAGS = -DHAVE_CONFIG_H
+LDFLAGS = 
+
+vgalib = -lkb -lalleg
+
+.SUFFIXES:
+.SUFFIXES: .c .o .s .bin
+
+.c.o:
+	$(CC) -c $(CFLAGS) $(CPPFLAGS) $<
+
+.c.s:
+	$(CC) -S $(CFLAGS) $(CPPFLAGS) $<
+
+.bin.c: bin_to_c
+	./bin_to_c $<
+
+
+progs = vgaspect
+
+all: $(progs)
+
+install: all
+
+z80_c_objs=z80.o z80optab.o z80_step.o spperif.o spect.o rom48.o \
+           z80_op1.o z80_op2.o z80_op3.o z80_op4.o z80_op5.o z80_op6.o
+
+z80_i386_objs=z80.o spperif.o rom48.o i386emul.o
+
+spect_objs=spmain.o spscr.o spkey.o spsound.o sptape.o tapefile.o \
+           snapshot.o compr.o sptiming.o interf.o misc.o spconf.o \
+           load_z80.o keynames.o spjoy.o $(z80_i386_objs)
+
+vgaspect_objs=vgaspect.o vgascr.o vgakey.o  $(spect_objs)
+vgaspect: $(vgaspect_objs)
+	$(CC) -o vgaspect $(LDFLAGS) $(vgaspect_objs) $(vgalib)
+
+
+speedt_objs=speedt.o $(@z80objs@)
+speedt: $(speedt_objs)
+	$(CC) -o speedt $(LDFLAGS) $(speedt_objs)
+
+i386emul.sp: i386step.S
+	$(CPP) $(CPPFLAGS) i386step.S > i386emul.sp
+
+i386emul.s: i386emul.sp sp_to_s
+	./sp_to_s < i386emul.sp > i386emul.s
+
+i386emul.o: i386emul.s
+	$(CC) -c $(CFLAGS) i386emul.s
+
+sp_to_s: sp_to_s.o
+	$(CC) -o sp_to_s $(LDFLAGS) sp_to_s.o
+
+bin_to_c: bin_to_c.o
+	$(CC) -o bin_to_c $(LDFLAGS) bin_to_c.o
+
+distclean:
+	del *.o 
+	del *.sp 
+	del *.exe
+	del i386emul.s 
+	del rom48.c 
+	del spectkey.c
+	del load_z80.c
+	del bin_to_c 
+	del sp_to_s 
+	del Makefile.old
+
+dist:	distclean
+	strip xspect
+	strip vgaspect
+
+clean: distclean
+	del *.exe
+	del vgaspect 
+	del speedt
+
+realclean: clean
+	del Makefile 
+	del config.h
+
+depend:
+	copy Makefile Makefile.old
+	copy Makefile.dos Makefile
+	gcc -MM $(CPPFLAGS) *.c >> Makefile
+
+
+i386emul.sp: i386def.S i386sp.S i386step.S 
+i386emul.sp: i386op1.S i386op1x.S i386op2.S i386op2x.S
+i386emul.sp: i386op3.S i386op3x.S i386op4.S
+i386emul.sp: i386op5.S i386op6.S 
+
+FORCE:
+
+# DO NOT REMOVE THIS LINE, OR "make depend" WILL NOT WORK

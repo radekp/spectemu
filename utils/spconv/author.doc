@@ -1,0 +1,68 @@
+In case you wonder who wrote this, well I did. I started it when I worked
+for Philips (Electronics Company). Our plant was taken over by Digital 
+(Computer Company) so then I was all of a sudden a Digital employe (sorry,
+it didn't help much for my English I'm afraid). Now I found a new job myself,
+so now, I now work for Ericsson (Telecom Company). Now Ericsson is Swedish
+so you can guess what will happen to my English now (ever seen the
+Swedish cook on the Muppets show... :-) :-) ).
+
+Neither Philips nor Digital nor Ericsson have anything to do with this
+software (the don't even know it exists!), complain to me if you have
+problems. Note that I can not be forced to do anything about it, so you
+are just lucky if I will make updates. You can of course modify it yourself,
+it's not illegal because I made it Public Domain. This means nobody owns it
+and you can do with it as you see fit. This also means that nobody can be
+blamed for screwing up your system, not even me! So if you think I hid a
+nasty HD-formating program in this software than don't use it!
+
+If you change something that might be usefull for others please tell me! I may
+include it in future versions. 
+
+If you help me in any way than I will put your name in the docs as a reward -
+unless you don't want it of course!
+
+------------- SKIP the next section if you don't know about PGP -------------
+You can always check if the binary is from me using spconv.sig. You need PGP
+(Pretty Good Privacy version 2 or better) for this, type:
+                     'pgp spconv.sig spconv.exe'. 
+You'll need a trusted public key from me, I have included my public key here
+but you need a independent key to be sure that I am who I appear to be. You
+can get my key from various PGP key-servers - info about this is is packed
+with pgp, pgpshell and pgpfront. If you use PGP you'll probably know about
+this already. You can also send me a message using this key, I can tell you
+if this is my key - not secure but better than nothing. By the way I used
+PGP2.6.i to create these keys.
+--------- END of SKIP the next section if you don't know about PGP ----------
+
+Please don't ask me to make the converter work for .TAP files, I will not
+because you need an emulator for that. The Shareware Z80-201.zip or newer
+will convert .TAP files to .Z80 for you, you can take if from there with
+this converter to any of the other formats.
+
+If you want to E-mail me, my current address is:
+
+	Henk de Groot, hegr@ensae.ericsson.se
+
+If you want to mail me privately use PGP (Pretty Good Privacy from Phil
+Zimmermann) if it contains material for me only (like snapshots or a message
+for verification of the public key so you can check spconv.exe with
+spconv.sig)
+
+My public PGP key:
+
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+Version: 2.6.i
+
+mQBNAizK3zcAAAECANa+YU5JTlRibS0wM3bqtgYpmnHI8377Z8gt1ErRa1zot/2f
+oa/FG6VVONYDs9s067IzVTU5qYDZmrGVwMaayAEABRG0JkhlbmsgZGUgR3Jvb3Qg
+PGhlZ3JAZW5zYWUuZXJpY3Nzb24uc2U+tCFIZW5rIGRlIEdyb290IDxncm9vdEBh
+cGQuZGVjLmNvbT60KUhlbmsgZGUgR3Jvb3QgPGdyb290QGlkY2EudGRzLnBoaWxp
+cHMubmw+
+=U9FR
+-----END PGP PUBLIC KEY BLOCK-----
+
+				Good luck with this software!
+
+
+				Henk de Groot.
+

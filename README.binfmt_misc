@@ -1,0 +1,14 @@
+Do you want to directly execute your .z80 snapshots like this:
+chmod 755 foo.z80
+./foo.z80
+
+Well, get the Linux kernel 2.2.x or 2.0.x-SuSE, compile it with misc
+binary format. Also say Y to the sysctl support if using 2.2.x.
+
+Put the following lines into your boot scripts:
+
+insmod binfmt_misc   # only if you compiled binfmt_misc as module
+echo ':z80:E::z80::/usr/local/bin/spectemu:' \
+    >/proc/sys/fs/binfmt_misc/register
+
+Boot the new kernel and enjoy spectemu :)
