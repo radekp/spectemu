@@ -1,0 +1,9 @@
+[Desktop Entry]
+Comment[]=X application launcher
+Exec=qx
+Type=Application
+Name[]=QX
+Icon=qx/qx
+[Translation]
+File=QtopiaApplications
+Context=qx
