@@ -21,6 +21,10 @@
 #ifndef SPKEY_P_H
 #define SPKEY_P_H
 
+#ifdef	__cplusplus
+extern	"C" {
+#endif
+
 #include "z80_type.h"
 
 struct keystate { 
@@ -213,5 +217,9 @@ extern void clear_keystates(void);
 extern int display_keyboard(void);
 extern void process_keys(void);
 extern void init_basekeys(void);
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif /* SPKEY_P_H */

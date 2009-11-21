@@ -21,6 +21,10 @@
 #ifndef SPPERIF_H
 #define SPPERIF_H
 
+#ifdef	__cplusplus
+extern	"C" {
+#endif
+
 #ifndef COMPARISON
 #define SPNM(x) sp_ ## x
 #else
@@ -76,5 +80,9 @@ extern int SPNM(lastborder);
 extern void SPNM(init_screen_mark)(void);
 extern void SPNM(init)(void);
 extern int SPNM(halfframe)(int firsttick, int numlines);
+
+#ifdef	__cplusplus
+};
+#endif
 
 #endif /* SPPERIF_H */

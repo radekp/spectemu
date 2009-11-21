@@ -21,9 +21,17 @@
 #ifndef SPMAIN_H
 #define SPMAIN_H
 
+#ifdef	__cplusplus
+extern	"C" {
+#endif
+
 extern void check_params(int argc, char *argv[]);
 extern void start_spectemu();
 extern void spma_init_privileged(void);
 extern void spma_lose_privs(void);
+
+#ifdef	__cplusplus
+};
+#endif
 
 #endif /* SPMAIN_H */

@@ -21,6 +21,10 @@
 #ifndef SPSCR_P_H
 #define SPSCR_P_H
 
+#ifdef	__cplusplus
+extern	"C" {
+#endif
+
 #define COLORNUM 16
 
 struct rgb {
@@ -36,5 +40,9 @@ extern struct rgb custom_colors[];
 extern void spscr_init_mask_color(void);
 extern void spscr_init_line_pointers(int lines);
 extern void spscr_init_colors(void);
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif /* SPSCR_P_H */

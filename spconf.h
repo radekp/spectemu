@@ -21,6 +21,10 @@
 #ifndef SPCONF_H
 #define SPCONF_H
 
+#ifdef	__cplusplus
+extern	"C" {
+#endif
+
 #define FT_SNAPSHOT 0
 #define FT_TAPEFILE 1
 
@@ -35,5 +39,8 @@ extern void spcf_read_command_line(int argc, char *argv[]);
 extern void spcf_read_xresources(void);
 extern int  spcf_find_file(const char *fname, char *fpath, 
                            int *ftp, int *ftsubp);
+#ifdef	__cplusplus
+};
+#endif
 
 #endif /* SPCONF_H */

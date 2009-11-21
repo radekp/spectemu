@@ -21,6 +21,10 @@
 #ifndef MISC_H
 #define MISC_H
 
+#ifdef	__cplusplus
+extern	"C" {
+#endif
+
 #include <sys/types.h>
 
 extern char *get_base_name(char *fname);
@@ -34,5 +38,9 @@ extern char *make_string(char *ostr, const char *nstr);
 extern void  free_string(char *ostr);
 
 extern int mis_strcasecmp(const char *s1, const char *s2);
+
+#ifdef	__cplusplus
+};
+#endif
 
 #endif /* MISC_H */

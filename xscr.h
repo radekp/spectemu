@@ -21,6 +21,10 @@
 #ifndef XSCR_H
 #define XSCR_H
 
+#ifdef	__cplusplus
+extern	"C" {
+#endif
+
 #include "ax.h"
 
 typedef unsigned long pixt;
@@ -41,5 +45,9 @@ extern void init_x_scr(aX_default_resources* defres,
 extern void init_xutils(void);
 extern int allocate_colors(void);
 extern void spxs_init_color(void);
+
+#ifdef	__cplusplus
+};
+#endif
 
 #endif /* XSCR_H */
