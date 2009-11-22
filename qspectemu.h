@@ -2,6 +2,7 @@
 #define QSPECTEMU_H
 
 #include <QWidget>
+#include <QTime>
 #include <QTimer>
 #include <QPaintEvent>
 #include <QPainter>
@@ -17,14 +18,11 @@
 #include "spmain.h"
 #include "spperif.h"
 #include "misc.h"
-#include "xscr.h"
 #include "spconf.h"
 #include "spscr_p.h"
 
-#include "ax.h"
-
 #define TV_WIDTH   320
-#define TV_HEIGHT  256
+#define TV_HEIGHT  192
 
 #define WIDTH      256
 #define HEIGHT     192

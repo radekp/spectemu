@@ -1,9 +1,14 @@
 #include "qspectemu.h"
 #include "spkey_p.h"
 
-QSpectemu *qspectemu;
-QImage scr;
-bool updating;
+QSpectemu *qspectemu;           // instance
+QImage scr;                     // bitmap with speccy screen
+QTime counter;
+
+int time25;                     // time that last 25 frames took
+int calcCounter;                // update_screen() call count
+int calcSkip;                   // counter for skipping frames on slow systems
+int calcTime;                   // last time speed was calculated
 
 QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
     : QWidget(parent)
@@ -17,7 +22,11 @@ QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
 
     argc = 0;
     argv = 0;
-    updating = false;
+    time25 = 1000;
+    calcCounter = 0;
+    calcSkip = 0;
+    calcTime = 0;
+    counter.start();
     qspectemu = this;
     QTimer::singleShot(1, this, SLOT(startSpectemu()));
 }
@@ -64,7 +73,6 @@ void QSpectemu::paintEvent(QPaintEvent *e)
     }
     QPainter p(this);
     p.drawImage(0, 0, scr);
-    updating = false;
 }
 
 void QSpectemu::mousePressEvent(QMouseEvent *e)
@@ -105,19 +113,32 @@ bool decodeKey(int key, int *ks, int *shks, int *ki)
         case Qt::Key_BracketLeft:   *ks = '[';      *shks = '{';        break;
         case Qt::Key_BracketRight:  *ks = ']';      *shks = '}';        break;
         case Qt::Key_Return:    *ks = SK_Return;                        break;
-        case Qt::Key_Control:   *ks = SK_Control_L;                        break;
-        case Qt::Key_A:  *ks = 'a';      *shks = 'A';        break;
-        case Qt::Key_S:  *ks = 's';      *shks = 'S';        break;
-        case Qt::Key_D:  *ks = 'd';      *shks = 'D';        break;
-        case Qt::Key_F:  *ks = 'f';      *shks = 'F';        break;
-        case Qt::Key_G:  *ks = 'g';      *shks = 'G';        break;
-        case Qt::Key_H:  *ks = 'h';      *shks = 'H';        break;
-        case Qt::Key_J:  *ks = 'j';      *shks = 'J';        break;
-        case Qt::Key_K:  *ks = 'k';      *shks = 'K';        break;
-        case Qt::Key_L:  *ks = 'l';      *shks = 'L';        break;
-        case Qt::Key_Semicolon:  *ks = ';';      *shks = ':';        break;
-        case Qt::Key_Apostrophe: *ks = '\'';     *shks = '"';        break;
-        case Qt::Key_QuoteLeft:  *ks = '`';      *shks = '~';        break;
+        case Qt::Key_Control:   *ks = SK_Control_L;                     break;
+        case Qt::Key_A:         *ks = 'a';          *shks = 'A';        break;
+        case Qt::Key_S:         *ks = 's';          *shks = 'S';        break;
+        case Qt::Key_D:         *ks = 'd';          *shks = 'D';        break;
+        case Qt::Key_F:         *ks = 'f';          *shks = 'F';        break;
+        case Qt::Key_G:         *ks = 'g';          *shks = 'G';        break;
+        case Qt::Key_H:         *ks = 'h';          *shks = 'H';        break;
+        case Qt::Key_J:         *ks = 'j';          *shks = 'J';        break;
+        case Qt::Key_K:         *ks = 'k';          *shks = 'K';        break;
+        case Qt::Key_L:         *ks = 'l';          *shks = 'L';        break;
+        case Qt::Key_Semicolon: *ks = ';';          *shks = ':';        break;
+        case Qt::Key_Apostrophe:*ks = '\'';         *shks = '"';        break;
+        case Qt::Key_QuoteLeft: *ks = '`';          *shks = '~';        break;
+        case Qt::Key_Shift:     *ks = SK_Shift_L;                       break;
+        case Qt::Key_Backslash: *ks = '\\';          *shks = '|';       break;
+        case Qt::Key_Z:         *ks = 'z';          *shks = 'Z';        break;
+        case Qt::Key_X:         *ks = 'x';          *shks = 'X';        break;
+        case Qt::Key_C:         *ks = 'c';          *shks = 'C';        break;
+        case Qt::Key_V:         *ks = 'v';          *shks = 'V';        break;
+        case Qt::Key_B:         *ks = 'b';          *shks = 'B';        break;
+        case Qt::Key_N:         *ks = 'n';          *shks = 'N';        break;
+        case Qt::Key_M:         *ks = 'm';          *shks = 'M';        break;
+        case Qt::Key_Comma:     *ks = ',';          *shks = '<';        break;
+        case Qt::Key_Period:    *ks = '.';          *shks = '>';        break;
+        case Qt::Key_Slash:     *ks = '/';          *shks = '?';        break;
+        case Qt::Key_Space:     *ks = ' ';          *shks = ' ';        break;
         default:
             return false;
     }
@@ -144,7 +165,7 @@ void QSpectemu::keyPressEvent(QKeyEvent *e)
     spkb_last.index = ki;
 
     spkb_kbstate[ki].state = 1;
-    spkb_kbstate[ki].press = 1234;
+    spkb_kbstate[ki].press = counter.elapsed();
     spkb_kbstate[ki].frame = sp_int_ctr;
 
     spkb_state_changed = 1;
@@ -217,6 +238,8 @@ void spkb_process_events(int evenframe)
 
 void init_spect_key(void)
 {
+    clear_keystates();
+    init_basekeys();
 }
 
 int display_keyboard(void)
@@ -226,13 +249,25 @@ int display_keyboard(void)
 
 void update_screen(void)
 {
-    if(updating)
+    int now = counter.elapsed();
+    calcCounter++;
+
+    if(calcCounter >= 25)
     {
-        return;
+        // How long last 25 frames took? Should be 1s but on slow system can be
+        // longer.
+        calcSkip = time25 = (now - calcTime);
+        calcCounter = 0;
+        calcTime = now;
     }
-    updating = true;
-    QTimer::singleShot(100, qspectemu, SLOT(update()));
-    //qspectemu->update();
+
+    // Skip frames if we are on slow system.
+    calcSkip -= 1010;
+    if(calcSkip < 0)
+    {
+        calcSkip += time25;
+        qspectemu->update();
+    }
 }
 
 void destroy_spect_scr(void)
