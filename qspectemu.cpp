@@ -69,11 +69,6 @@ void QSpectemu::paintEvent(QPaintEvent *e)
     p.drawImage(0, 0, scr);
 }
 
-void QSpectemu::mousePressEvent(QMouseEvent *e)
-{
-
-}
-
 bool decodeKey(int key, int *ks, int *shks, int *ki)
 {
     *shks = 0;
@@ -144,12 +139,12 @@ bool decodeKey(int key, int *ks, int *shks, int *ki)
     return true;
 }
 
-void QSpectemu::keyPressEvent(QKeyEvent *e)
+static void pressKey(int key)
 {
     int ks, shks, ki;
-    if(!decodeKey(e->key(), &ks, &shks, &ki))
+    if(!decodeKey(key, &ks, &shks, &ki))
     {
-        printf("unknown key=%d\n", e->key());
+        printf("unknown key=%d\n", key);
         return;
     }
 
@@ -166,12 +161,12 @@ void QSpectemu::keyPressEvent(QKeyEvent *e)
     process_keys();
 }
 
-void QSpectemu::keyReleaseEvent(QKeyEvent *e)
+static void releaseKey(int key)
 {
     int ks, shks, ki;
-    if(!decodeKey(e->key(), &ks, &shks, &ki))
+    if(!decodeKey(key, &ks, &shks, &ki))
     {
-        printf("unknown key=%d\n", e->key());
+        printf("unknown key=%d\n", key);
         return;
     }
 
@@ -180,6 +175,47 @@ void QSpectemu::keyReleaseEvent(QKeyEvent *e)
 
     spkb_state_changed = 1;
     process_keys();
+}
+
+static int getKey(int x, int y)
+{
+    if(y < 100)
+    {
+        return Qt::Key_I;
+    }
+    if(x > 100 && x < 380)
+    {
+        return Qt::Key_Return;
+    }
+    if(x < 100)
+    {
+        return Qt::Key_Period;
+    }
+    if(x > 380)
+    {
+        return Qt::Key_Slash;
+    }
+    return -1;
+}
+
+void QSpectemu::mousePressEvent(QMouseEvent *e)
+{
+    pressKey(getKey(e->x(), e->y()));
+}
+
+void QSpectemu::mouseReleaseEvent(QMouseEvent *e)
+{
+    releaseKey(getKey(e->x(), e->y()));
+}
+
+void QSpectemu::keyPressEvent(QKeyEvent *e)
+{
+    pressKey(e->key());
+}
+
+void QSpectemu::keyReleaseEvent(QKeyEvent *e)
+{
+    releaseKey(e->key());
 }
 
 #ifdef	__cplusplus
