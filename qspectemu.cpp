@@ -5,11 +5,6 @@ QSpectemu *qspectemu;           // instance
 QImage scr;                     // bitmap with speccy screen
 QTime counter;
 
-int time25;                     // time that last 25 frames took
-int calcCounter;                // update_screen() call count
-int calcSkip;                   // counter for skipping frames on slow systems
-int calcTime;                   // last time speed was calculated
-
 QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
     : QWidget(parent)
 {
@@ -20,12 +15,10 @@ QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
     Q_UNUSED(f);
 #endif
 
+    //setAttribute(Qt::WA_NoSystemBackground);
+
     argc = 0;
     argv = 0;
-    time25 = 1000;
-    calcCounter = 0;
-    calcSkip = 0;
-    calcTime = 0;
     counter.start();
     qspectemu = this;
     QTimer::singleShot(1, this, SLOT(startSpectemu()));
@@ -72,6 +65,7 @@ void QSpectemu::paintEvent(QPaintEvent *e)
         return;
     }
     QPainter p(this);
+    //p.setCompositionMode(QPainter::CompositionMode_Source);
     p.drawImage(0, 0, scr);
 }
 
@@ -249,25 +243,23 @@ int display_keyboard(void)
 
 void update_screen(void)
 {
-    int now = counter.elapsed();
-    calcCounter++;
-
-    if(calcCounter >= 25)
+    int top = -1;
+    int bottom = 0;
+    for(int i = 0; i < HEIGHT; i++)
     {
-        // How long last 25 frames took? Should be 1s but on slow system can be
-        // longer.
-        calcSkip = time25 = (now - calcTime);
-        calcCounter = 0;
-        calcTime = now;
+        if(sp_imag_mark[i] == 0)
+        {
+            continue;
+        }
+        if(top < 0)
+        {
+            top = i;
+        }
+        bottom = i;
+        sp_imag_mark[i] = 0;
     }
 
-    // Skip frames if we are on slow system.
-    calcSkip -= 1010;
-    if(calcSkip < 0)
-    {
-        calcSkip += time25;
-        qspectemu->update();
-    }
+    qspectemu->update(0, top, TV_WIDTH, bottom + 1);
 }
 
 void destroy_spect_scr(void)
