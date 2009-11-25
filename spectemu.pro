@@ -13,6 +13,8 @@ DEFINES += HAVE_MITSHM \
 STRING_LANGUAGE = en_US
 LANGUAGES = en_US
 
+RESOURCES = resources.qrc
+
 # Input files
 HEADERS = qspectemu.h
 SOURCES = interf.c \

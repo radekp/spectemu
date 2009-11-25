@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/" >
+        <file>spectkey.png</file>
+    </qresource>
+</RCC>

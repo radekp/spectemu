@@ -8,7 +8,12 @@
 #include <QPainter>
 #include <QApplication>
 #include <QImage>
+#include <QVBoxLayout>
 #include <QPushButton>
+#include <QListWidget>
+#include <QListWidgetItem>
+#include <QProcess>
+#include <QMessageBox>
 #ifdef QTOPIA
 #include <QtopiaApplication>
 #endif
@@ -27,6 +32,31 @@
 #define WIDTH      256
 #define HEIGHT     192
 
+class RunScreen : public QWidget
+{
+    Q_OBJECT
+
+public:
+    RunScreen();
+    void showScreen();
+    void setRes(int xy);
+
+protected:
+    bool event(QEvent *);
+    void paintEvent(QPaintEvent *);
+    void enterFullScreen();
+    void keyPressEvent(QKeyEvent *);
+    void keyReleaseEvent(QKeyEvent *);
+    void mousePressEvent(QMouseEvent *);
+    void mouseReleaseEvent(QMouseEvent *);
+
+private:
+    bool showKeysPng;
+    int bindKey;
+    int lastKey;
+};
+
+
 class QSpectemu : public QWidget
 {
     Q_OBJECT
@@ -35,19 +65,16 @@ public:
     QSpectemu(QWidget *parent = 0, Qt::WFlags f = 0);
     ~QSpectemu();
 
-protected:
-    void paintEvent(QPaintEvent *);
-    void mousePressEvent(QMouseEvent *);
-    void mouseReleaseEvent(QMouseEvent *);
-    void keyPressEvent(QKeyEvent *);
-    void keyReleaseEvent(QKeyEvent *);
-
 private:
     int argc;
     char **argv;
+    QListWidget *lw;
+    QPushButton *bOk;
+    QVBoxLayout *layout;
+    void fillLw();
 
 private slots:
-    void startSpectemu();
+    void okClicked();
 
 };
 

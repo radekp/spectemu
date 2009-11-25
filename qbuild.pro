@@ -17,6 +17,8 @@ pkg [
     maintainer="Radek Polak <psonek2@seznam.cz>"
 ]
 
+RESOURCES = resources.qrc
+
 # Input files
 HEADERS=qspectemu.h
 

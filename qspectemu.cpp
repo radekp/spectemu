@@ -2,71 +2,101 @@
 #include "spkey_p.h"
 
 QSpectemu *qspectemu;           // instance
+RunScreen *runScr;
 QImage scr;                     // bitmap with speccy screen
+int scrTop;                     // used in qvga mode
 QTime counter;
 
-QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
-    : QWidget(parent)
+RunScreen::RunScreen()
 {
-#ifdef QTOPIA
-    this->setWindowState(Qt::WindowMaximized);
-    QtopiaApplication::setInputMethodHint(this, QtopiaApplication::AlwaysOn);
-#else
-    Q_UNUSED(f);
-#endif
-
-    //setAttribute(Qt::WA_NoSystemBackground);
-
-    argc = 0;
-    argv = 0;
-    counter.start();
-    qspectemu = this;
-    QTimer::singleShot(1, this, SLOT(startSpectemu()));
+    scrTop = 0;
+    showKeysPng = false;
+    bindKey = QMessageBox::No;
 }
 
-QSpectemu::~QSpectemu()
+void RunScreen::showScreen()
 {
-    for(int i = 0; i < argc; )
+    showMaximized();
+    enterFullScreen();
+}
+
+bool RunScreen::event(QEvent *event)
+{
+    if(event->type() == QEvent::WindowDeactivate)
     {
-        if(argv[i])
-        {
-            free(argv[i]);
-        }
-        i++;
-        if(i == argc)
-        {
-            free(argv);
-        }
+        lower();
     }
-}
-
-void QSpectemu::startSpectemu()
-{
-    QStringList args = QApplication::arguments();
-    argc = args.count();
-    argv = (char **) malloc_err(sizeof(char *) * argc);
-    for(int i = 0; i < argc; i++)
+    else if(event->type() == QEvent::WindowActivate)
     {
-        argv[i] = strdup((char *) args.at(i).toLocal8Bit().constData());
+        QString title = windowTitle();
+        setWindowTitle(QLatin1String("_allow_on_top_"));
+        raise();
+        setWindowTitle(title);
     }
-
-    spma_init_privileged();
-    spcf_pre_check_options(argc, argv);
-    check_params(argc, argv);
-    sp_init();
-
-    start_spectemu();
+    return QWidget::event(event);
 }
 
-void QSpectemu::paintEvent(QPaintEvent *e)
+void RunScreen::paintEvent(QPaintEvent *)
 {
     if(sp_image == 0)
     {
         return;
     }
     QPainter p(this);
+    //p.rotate(90);
+    //p.scale(2, 2);
     //p.setCompositionMode(QPainter::CompositionMode_Source);
-    p.drawImage(0, 0, scr);
+    if(!showKeysPng)
+    {
+        p.drawImage(0, scrTop, scr);
+    }
+    else
+    {
+        QPixmap kbpix(":/spectkey.png");
+        p.drawPixmap(0, 0, kbpix);
+        if(height() > width() && width() < kbpix.width())
+        {
+            p.drawPixmap(width() - kbpix.width(), kbpix.height(), kbpix);
+        }
+    }
+}
+
+void RunScreen::enterFullScreen()
+{
+#ifdef QTOPIA
+    // Show editor view in full screen
+    setWindowFlags(windowFlags() | Qt::WindowStaysOnTopHint);
+    setWindowState(Qt::WindowFullScreen);
+    raise();
+#endif
+}
+
+void RunScreen::setRes(int xy)
+{
+#ifdef QTOPIA
+    if(xy == 320240 || xy == 640480)
+    {
+        QFile f("/sys/bus/spi/devices/spi2.0/state");
+        f.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate);
+        if(xy == 320240)
+        {
+            QProcess p(this);
+            p.start("fbset", QStringList("qvga"));
+            p.waitForFinished(5000);
+            f.write("qvga-normal");
+        }
+        else if(xy == 640480)
+        {
+            QProcess p(this);
+            p.start("fbset", QStringList("vga"));
+            p.waitForFinished(5000);
+            f.write("normal");
+        }
+        f.close();
+    }
+#else
+    Q_UNUSED(xy);
+#endif
 }
 
 bool decodeKey(int key, int *ks, int *shks, int *ki)
@@ -177,45 +207,251 @@ static void releaseKey(int key)
     process_keys();
 }
 
-static int getKey(int x, int y)
-{
-    if(y < 100)
-    {
-        return Qt::Key_I;
-    }
-    if(x > 100 && x < 380)
-    {
-        return Qt::Key_Return;
-    }
-    if(x < 100)
-    {
-        return Qt::Key_Period;
-    }
-    if(x > 380)
-    {
-        return Qt::Key_Slash;
-    }
-    return -1;
-}
-
-void QSpectemu::mousePressEvent(QMouseEvent *e)
-{
-    pressKey(getKey(e->x(), e->y()));
-}
-
-void QSpectemu::mouseReleaseEvent(QMouseEvent *e)
-{
-    releaseKey(getKey(e->x(), e->y()));
-}
-
-void QSpectemu::keyPressEvent(QKeyEvent *e)
+void RunScreen::keyPressEvent(QKeyEvent *e)
 {
     pressKey(e->key());
 }
 
-void QSpectemu::keyReleaseEvent(QKeyEvent *e)
+void RunScreen::keyReleaseEvent(QKeyEvent *e)
 {
     releaseKey(e->key());
+}
+
+// On screen key info
+struct oskey {
+    int key;
+    int x;
+    int y;
+};
+
+// User defined on screen keys
+static struct oskey oskeys[] = {
+    {0, 0, 0},
+    {0, 0, 0},
+    {0, 0, 0},
+    {0, 0, 0},
+    {0, 0, 0},
+    {0, 0, 0},
+    {0, 0, 0},
+    {0, 0, 0},
+    {0, 0, 0},
+    {0, 0, 0},
+    {0, 0, 0},
+    {0, 0, 0},
+    {0, 0, 0},
+    {0, 0, 0},
+    {0, 0, 0},
+    {0, 0, 0},
+};
+
+// On screen coordinates for spectkey.png
+static struct oskey oskeyspng[] = {
+    {Qt::Key_1, 57, 103},
+    {Qt::Key_2, 111, 103},
+    {Qt::Key_3, 166, 103},
+    {Qt::Key_4, 220, 103},
+    {Qt::Key_5, 276, 103},
+    {Qt::Key_6, 330, 103},
+    {Qt::Key_7, 386, 103},
+    {Qt::Key_8, 440, 103},
+    {Qt::Key_9, 498, 103},
+    {Qt::Key_0, 553, 103},
+    {Qt::Key_Q, 85, 160},
+    {Qt::Key_W, 139, 160},
+    {Qt::Key_E, 190, 160},
+    {Qt::Key_R, 248, 160},
+    {Qt::Key_T, 303, 160},
+    {Qt::Key_Y, 358, 160},
+    {Qt::Key_U, 413, 160},
+    {Qt::Key_I, 467, 160},
+    {Qt::Key_O, 524, 160},
+    {Qt::Key_P, 580, 160},
+    {Qt::Key_A, 96, 216},
+    {Qt::Key_S, 151, 216},
+    {Qt::Key_D, 207, 216},
+    {Qt::Key_F, 260, 216},
+    {Qt::Key_G, 317, 216},
+    {Qt::Key_H, 370, 216},
+    {Qt::Key_J, 426, 216},
+    {Qt::Key_K, 480, 216},
+    {Qt::Key_L, 535, 216},
+    {Qt::Key_Enter, 590, 216},
+    {Qt::Key_Shift, 60, 272},
+    {Qt::Key_Z, 123, 272},
+    {Qt::Key_X, 177, 272},
+    {Qt::Key_C, 232, 272},
+    {Qt::Key_V, 287, 272},
+    {Qt::Key_B, 342, 272},
+    {Qt::Key_N, 398, 272},
+    {Qt::Key_M, 452, 272},
+    {Qt::Key_Control, 507, 272},
+    {Qt::Key_Space, 578, 272},
+};
+
+#define OSKEYS_SIZE (int)(sizeof(oskeys) / sizeof(oskey))
+#define OSKEYSPNG_SIZE (int)(sizeof(oskeyspng) / sizeof(oskey))
+
+static int getKey(int x, int y)
+{
+    for(int i = 0; i < OSKEYS_SIZE; i++)
+    {
+        oskey *ki = &(oskeys[i]);
+        if(abs(x - ki->x) < 64 && abs(y - ki->y) < 64)
+        {
+            return ki->key;
+        }
+    }
+    return -1;
+}
+
+static int getKeyPng(int x, int y)
+{
+    for(int i = 0; i < OSKEYSPNG_SIZE; i++)
+    {
+        oskey *ki = &(oskeyspng[i]);
+        if(abs(x - ki->x) < 32 && abs(y - ki->y) < 32)
+        {
+            return ki->key;
+        }
+    }
+    return -1;
+}
+
+void RunScreen::mousePressEvent(QMouseEvent *e)
+{
+    int key;
+    if(!showKeysPng)
+    {
+        key = lastKey = getKey(e->x(), e->y());
+        if(key > 0)
+        {
+            pressKey(key);
+            return;
+        }
+        if(bindKey != QMessageBox::NoToAll)
+        {
+            bindKey = QMessageBox::question(this, "ZX Spectrum", tr("Bind key?"),
+                                            QMessageBox::Yes | QMessageBox::No | QMessageBox::NoToAll);
+        }
+        for(int i = 0; i < OSKEYS_SIZE; i++)
+        {
+            oskey *ki = &(oskeys[i]);
+            if(ki->key <= 0)
+            {
+                ki->x = e->x();
+                ki->y = e->y();
+                break;
+            }
+        }
+        showKeysPng = true;
+        update();
+        return;
+    }
+
+    key = getKeyPng(e->x(), e->y());
+    if(bindKey != QMessageBox::Yes)
+    {
+        lastKey = key;
+        pressKey(key);
+    }
+    else
+    {
+        for(int i = 0; i < OSKEYS_SIZE; i++)
+        {
+            oskey *ki = &(oskeys[i]);
+            if(ki->key <= 0)
+            {
+                ki->key = key;
+                break;
+            }
+        }
+    }
+
+    showKeysPng = false;
+    update();
+}
+
+void RunScreen::mouseReleaseEvent(QMouseEvent *e)
+{
+    if(lastKey > 0)
+    {
+        releaseKey(lastKey);
+    }
+}
+
+QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
+    : QWidget(parent)
+{
+#ifdef QTOPIA
+    this->setWindowState(Qt::WindowMaximized);
+    QtopiaApplication::setInputMethodHint(this, QtopiaApplication::AlwaysOn);
+#else
+    Q_UNUSED(f);
+#endif
+
+    lw = new QListWidget(this);
+    fillLw();
+
+    bOk = new QPushButton(tr("Run"), this);
+    connect(bOk, SIGNAL(clicked()), this, SLOT(okClicked()));
+
+    layout = new QVBoxLayout(this);
+    layout->addWidget(lw);
+    layout->addWidget(bOk);
+
+    runScr = new RunScreen();
+
+    //setAttribute(Qt::WA_NoSystemBackground);
+
+    argc = 0;
+    argv = 0;
+    counter.start();
+    qspectemu = this;
+//    QTimer::singleShot(1, this, SLOT(startSpectemu()));
+}
+
+QSpectemu::~QSpectemu()
+{
+    for(int i = 0; i < argc; )
+    {
+        if(argv[i])
+        {
+            free(argv[i]);
+        }
+        i++;
+        if(i == argc)
+        {
+            free(argv);
+        }
+    }
+}
+
+void QSpectemu::fillLw()
+{
+    lw->clear();
+
+    QListWidgetItem *item = new QListWidgetItem("Jetpac", lw, QListWidgetItem::UserType);
+    lw->addItem(item);
+}
+
+void QSpectemu::okClicked()
+{
+    runScr->showScreen();
+
+    QStringList args = QApplication::arguments();
+    argc = args.count();
+    argv = (char **) malloc_err(sizeof(char *) * argc);
+    for(int i = 0; i < argc; i++)
+    {
+        argv[i] = strdup((char *) args.at(i).toLocal8Bit().constData());
+    }
+
+    spma_init_privileged();
+    spcf_pre_check_options(argc, argv);
+    check_params(argc, argv);
+    sp_init();
+
+    start_spectemu();
 }
 
 #ifdef	__cplusplus
@@ -295,7 +531,7 @@ void update_screen(void)
         sp_imag_mark[i] = 0;
     }
 
-    qspectemu->update(0, top, TV_WIDTH, bottom + 1);
+    runScr->update(0, top + scrTop, TV_WIDTH, scrTop + bottom + 1);
 }
 
 void destroy_spect_scr(void)
