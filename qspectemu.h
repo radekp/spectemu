@@ -49,11 +49,25 @@ protected:
     void keyReleaseEvent(QKeyEvent *);
     void mousePressEvent(QMouseEvent *);
     void mouseReleaseEvent(QMouseEvent *);
+    void mouseMoveEvent(QMouseEvent *);
 
 private:
-    bool showKeysPng;
-    int bindKey;
-    int lastKey;
+    enum Screen
+    {
+        ScreenSpectrumUnbinded,     // running spectrum, no keys binded
+        ScreenSpectrum,             // running spectrum
+        ScreenKeyboardPng,          // big on screen keyboard
+        ScreenKeyboardPngBind,      // big on screen keyboard while binding key
+        ScreenBindings,             // showing how keys are binded and allow edit/add keys
+    };
+
+    Screen screen;
+    int pressedKeyX;                // x and y of pressed on screen key
+    int pressedKeyY;
+    void showScreen(Screen screen);
+
+private slots:
+    void showScreenKeyboardPngBind();
 };
 
 

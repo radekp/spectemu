@@ -1,5 +1,5 @@
 <RCC>
     <qresource prefix="/" >
-        <file>spectkey.png</file>
+        <file>qspectkey.png</file>
     </qresource>
 </RCC>

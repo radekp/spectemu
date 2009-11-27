@@ -7,58 +7,90 @@ QImage scr;                     // bitmap with speccy screen
 int scrTop;                     // used in qvga mode
 QTime counter;
 
+// On screen key info
+struct oskey {
+    int key;
+    int x;
+    int y;
+};
+
+// User defined on screen keys
+static struct oskey oskeys[] = {
+    {0, 0, 0},
+    {0, 0, 0},
+    {0, 0, 0},
+    {0, 0, 0},
+    {0, 0, 0},
+    {0, 0, 0},
+    {0, 0, 0},
+    {0, 0, 0},
+    {0, 0, 0},
+    {0, 0, 0},
+    {0, 0, 0},
+    {0, 0, 0},
+    {0, 0, 0},
+    {0, 0, 0},
+    {0, 0, 0},
+    {0, 0, 0},
+};
+
+// On screen coordinates for spectkey.png
+static struct oskey oskeyspng[] = {
+    {Qt::Key_1, 57, 103},
+    {Qt::Key_2, 111, 103},
+    {Qt::Key_3, 166, 103},
+    {Qt::Key_4, 220, 103},
+    {Qt::Key_5, 276, 103},
+    {Qt::Key_6, 330, 103},
+    {Qt::Key_7, 386, 103},
+    {Qt::Key_8, 440, 103},
+    {Qt::Key_9, 498, 103},
+    {Qt::Key_0, 553, 103},
+    {Qt::Key_Q, 85, 160},
+    {Qt::Key_W, 139, 160},
+    {Qt::Key_E, 190, 160},
+    {Qt::Key_R, 248, 160},
+    {Qt::Key_T, 303, 160},
+    {Qt::Key_Y, 358, 160},
+    {Qt::Key_U, 413, 160},
+    {Qt::Key_I, 467, 160},
+    {Qt::Key_O, 524, 160},
+    {Qt::Key_P, 580, 160},
+    {Qt::Key_A, 96, 216},
+    {Qt::Key_S, 151, 216},
+    {Qt::Key_D, 207, 216},
+    {Qt::Key_F, 260, 216},
+    {Qt::Key_G, 317, 216},
+    {Qt::Key_H, 370, 216},
+    {Qt::Key_J, 426, 216},
+    {Qt::Key_K, 480, 216},
+    {Qt::Key_L, 535, 216},
+    {Qt::Key_Enter, 590, 216},
+    {Qt::Key_Shift, 60, 272},
+    {Qt::Key_Z, 123, 272},
+    {Qt::Key_X, 177, 272},
+    {Qt::Key_C, 232, 272},
+    {Qt::Key_V, 287, 272},
+    {Qt::Key_B, 342, 272},
+    {Qt::Key_N, 398, 272},
+    {Qt::Key_M, 452, 272},
+    {Qt::Key_Control, 507, 272},
+    {Qt::Key_Space, 578, 272},
+};
+
+#define OSKEYS_SIZE (int)(sizeof(oskeys) / sizeof(oskey))
+#define OSKEYSPNG_SIZE (int)(sizeof(oskeyspng) / sizeof(oskey))
+
 RunScreen::RunScreen()
 {
     scrTop = 0;
-    showKeysPng = false;
-    bindKey = QMessageBox::No;
+    screen = RunScreen::ScreenSpectrumUnbinded;
 }
 
 void RunScreen::showScreen()
 {
     showMaximized();
     enterFullScreen();
-}
-
-bool RunScreen::event(QEvent *event)
-{
-    if(event->type() == QEvent::WindowDeactivate)
-    {
-        lower();
-    }
-    else if(event->type() == QEvent::WindowActivate)
-    {
-        QString title = windowTitle();
-        setWindowTitle(QLatin1String("_allow_on_top_"));
-        raise();
-        setWindowTitle(title);
-    }
-    return QWidget::event(event);
-}
-
-void RunScreen::paintEvent(QPaintEvent *)
-{
-    if(sp_image == 0)
-    {
-        return;
-    }
-    QPainter p(this);
-    //p.rotate(90);
-    //p.scale(2, 2);
-    //p.setCompositionMode(QPainter::CompositionMode_Source);
-    if(!showKeysPng)
-    {
-        p.drawImage(0, scrTop, scr);
-    }
-    else
-    {
-        QPixmap kbpix(":/spectkey.png");
-        p.drawPixmap(0, 0, kbpix);
-        if(height() > width() && width() < kbpix.width())
-        {
-            p.drawPixmap(width() - kbpix.width(), kbpix.height(), kbpix);
-        }
-    }
 }
 
 void RunScreen::enterFullScreen()
@@ -207,101 +239,16 @@ static void releaseKey(int key)
     process_keys();
 }
 
-void RunScreen::keyPressEvent(QKeyEvent *e)
+static void releaseAllKeys()
 {
-    pressKey(e->key());
-}
-
-void RunScreen::keyReleaseEvent(QKeyEvent *e)
-{
-    releaseKey(e->key());
-}
-
-// On screen key info
-struct oskey {
-    int key;
-    int x;
-    int y;
-};
-
-// User defined on screen keys
-static struct oskey oskeys[] = {
-    {0, 0, 0},
-    {0, 0, 0},
-    {0, 0, 0},
-    {0, 0, 0},
-    {0, 0, 0},
-    {0, 0, 0},
-    {0, 0, 0},
-    {0, 0, 0},
-    {0, 0, 0},
-    {0, 0, 0},
-    {0, 0, 0},
-    {0, 0, 0},
-    {0, 0, 0},
-    {0, 0, 0},
-    {0, 0, 0},
-    {0, 0, 0},
-};
-
-// On screen coordinates for spectkey.png
-static struct oskey oskeyspng[] = {
-    {Qt::Key_1, 57, 103},
-    {Qt::Key_2, 111, 103},
-    {Qt::Key_3, 166, 103},
-    {Qt::Key_4, 220, 103},
-    {Qt::Key_5, 276, 103},
-    {Qt::Key_6, 330, 103},
-    {Qt::Key_7, 386, 103},
-    {Qt::Key_8, 440, 103},
-    {Qt::Key_9, 498, 103},
-    {Qt::Key_0, 553, 103},
-    {Qt::Key_Q, 85, 160},
-    {Qt::Key_W, 139, 160},
-    {Qt::Key_E, 190, 160},
-    {Qt::Key_R, 248, 160},
-    {Qt::Key_T, 303, 160},
-    {Qt::Key_Y, 358, 160},
-    {Qt::Key_U, 413, 160},
-    {Qt::Key_I, 467, 160},
-    {Qt::Key_O, 524, 160},
-    {Qt::Key_P, 580, 160},
-    {Qt::Key_A, 96, 216},
-    {Qt::Key_S, 151, 216},
-    {Qt::Key_D, 207, 216},
-    {Qt::Key_F, 260, 216},
-    {Qt::Key_G, 317, 216},
-    {Qt::Key_H, 370, 216},
-    {Qt::Key_J, 426, 216},
-    {Qt::Key_K, 480, 216},
-    {Qt::Key_L, 535, 216},
-    {Qt::Key_Enter, 590, 216},
-    {Qt::Key_Shift, 60, 272},
-    {Qt::Key_Z, 123, 272},
-    {Qt::Key_X, 177, 272},
-    {Qt::Key_C, 232, 272},
-    {Qt::Key_V, 287, 272},
-    {Qt::Key_B, 342, 272},
-    {Qt::Key_N, 398, 272},
-    {Qt::Key_M, 452, 272},
-    {Qt::Key_Control, 507, 272},
-    {Qt::Key_Space, 578, 272},
-};
-
-#define OSKEYS_SIZE (int)(sizeof(oskeys) / sizeof(oskey))
-#define OSKEYSPNG_SIZE (int)(sizeof(oskeyspng) / sizeof(oskey))
-
-static int getKey(int x, int y)
-{
-    for(int i = 0; i < OSKEYS_SIZE; i++)
+    for(int i = 0; i < NR_SPKEYS; i++)
     {
-        oskey *ki = &(oskeys[i]);
-        if(abs(x - ki->x) < 64 && abs(y - ki->y) < 64)
-        {
-            return ki->key;
-        }
+        spkb_kbstate[i].state = 0;
+        spkb_kbstate[i].press = 0;
     }
-    return -1;
+
+    spkb_state_changed = 1;
+    process_keys();
 }
 
 static int getKeyPng(int x, int y)
@@ -317,45 +264,174 @@ static int getKeyPng(int x, int y)
     return -1;
 }
 
+void RunScreen::showScreen(Screen screen)
+{
+    this->screen = screen;
+    update();
+}
+
+void RunScreen::showScreenKeyboardPngBind()
+{
+    showScreen(RunScreen::ScreenKeyboardPngBind);
+}
+
+bool RunScreen::event(QEvent *event)
+{
+    if(event->type() == QEvent::WindowDeactivate)
+    {
+        lower();
+    }
+    else if(event->type() == QEvent::WindowActivate)
+    {
+        QString title = windowTitle();
+        setWindowTitle(QLatin1String("_allow_on_top_"));
+        raise();
+        setWindowTitle(title);
+    }
+    return QWidget::event(event);
+}
+
+void RunScreen::paintEvent(QPaintEvent *)
+{
+    if(sp_image == 0)
+    {
+        return;
+    }
+    QPainter p(this);
+    //p.rotate(90);
+    //p.scale(2, 2);
+    //p.setCompositionMode(QPainter::CompositionMode_Source);
+    if(screen == RunScreen::ScreenSpectrum ||
+       screen == RunScreen::ScreenSpectrumUnbinded)
+    {
+        p.drawImage(0, scrTop, scr);
+    }
+    else if(screen == RunScreen::ScreenKeyboardPng ||
+            screen == RunScreen::ScreenKeyboardPngBind)
+    {
+        QPixmap kbpix(":/qspectkey.png");
+        p.drawPixmap(0, 0, kbpix);
+        if(kbpix.width() > width())
+        {
+            p.drawPixmap(width() - kbpix.width(), kbpix.height(), kbpix);
+        }
+    }
+    else if(screen == RunScreen::ScreenBindings)
+    {
+        for(int i = 0; i < OSKEYS_SIZE; i++)
+        {
+            oskey *ki = &(oskeys[i]);
+            if(ki->x <= 0)
+            {
+                continue;
+            }
+            p.fillRect(ki->x - 16, ki->y - 16, 32, 32, QColor(64, 64, 64, 64));
+            p.setPen(QColor(255, 255, 255, 255));
+
+            QString key(QChar(ki->key));
+            p.drawText(ki->x, ki->y, key);
+        }
+    }
+}
+
+void RunScreen::keyPressEvent(QKeyEvent *e)
+{
+    pressKey(e->key());
+}
+
+void RunScreen::keyReleaseEvent(QKeyEvent *e)
+{
+    releaseKey(e->key());
+}
+
 void RunScreen::mousePressEvent(QMouseEvent *e)
 {
-    int key;
-    if(!showKeysPng)
+    if(screen == RunScreen::ScreenSpectrum)
     {
-        key = lastKey = getKey(e->x(), e->y());
-        if(key > 0)
-        {
-            pressKey(key);
-            return;
-        }
-        if(bindKey != QMessageBox::NoToAll)
-        {
-            bindKey = QMessageBox::question(this, "ZX Spectrum", tr("Bind key?"),
-                                            QMessageBox::Yes | QMessageBox::No | QMessageBox::NoToAll);
-        }
+        // Find nearest distance
+        int x = e->x();
+        int y = e->y();
+        int minDist = 0xffff;
         for(int i = 0; i < OSKEYS_SIZE; i++)
         {
             oskey *ki = &(oskeys[i]);
             if(ki->key <= 0)
             {
-                ki->x = e->x();
-                ki->y = e->y();
-                break;
+                continue;
+            }
+            int dist = abs(x - ki->x) + abs(y - ki->y);
+            if(dist < minDist)
+            {
+                minDist = dist;
+                pressedKeyX = ki->x;
+                pressedKeyY = ki->y;
             }
         }
-        showKeysPng = true;
+        // Press all keys in this distance
+        for(int i = 0; i < OSKEYS_SIZE; i++)
+        {
+            oskey *ki = &(oskeys[i]);
+            if(ki->key <= 0)
+            {
+                continue;
+            }
+            int dist = abs(x - ki->x) + abs(y - ki->y);
+            if(ki->x == pressedKeyX && ki->y == pressedKeyY)
+            {
+                pressKey(ki->key);
+            }
+        }
+    }
+    else if(screen == RunScreen::ScreenSpectrumUnbinded)
+    {
+        if(QMessageBox::question(this, "ZX Spectrum", tr("Bind keys?"),
+                                 QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes)
+        {
+            showScreen(RunScreen::ScreenBindings);
+        }
+        else
+        {
+            showScreen(RunScreen::ScreenSpectrum);
+        }
+    }
+    else if(screen == RunScreen::ScreenBindings)
+    {
+        int x = e->x();
+        int y = e->y();
+        for(int i = 0; i < OSKEYS_SIZE; i++)
+        {
+            oskey *ki = &(oskeys[i]);
+            if(ki->key > 0)
+            {
+                if(abs(x - ki->x) < 16 && abs(y - ki->y) < 16)
+                {
+                    // Replace binding or assign one more key?
+                    QString key(QChar(ki->key));
+                    if(QMessageBox::question(this, "Bind key", tr("Replace") + " '" + key + "' ?",
+                                 QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes)
+                    {
+                        ki->key = 0;    // replace binding
+                    }
+                    x = ki->x;
+                    y = ki->y;
+                }
+                continue;
+            }
+            ki->x = x;
+            ki->y = y;
+            break;
+        }
         update();
-        return;
+        QTimer::singleShot(500, this, SLOT(showScreenKeyboardPngBind()));
     }
-
-    key = getKeyPng(e->x(), e->y());
-    if(bindKey != QMessageBox::Yes)
+    else if(screen == RunScreen::ScreenKeyboardPng)
     {
-        lastKey = key;
-        pressKey(key);
+        pressKey(getKeyPng(e->x(), e->y()));
+        showScreen(RunScreen::ScreenSpectrum);
     }
-    else
+    else if(screen == RunScreen::ScreenKeyboardPngBind)
     {
+        int key = getKeyPng(e->x(), e->y());
         for(int i = 0; i < OSKEYS_SIZE; i++)
         {
             oskey *ki = &(oskeys[i]);
@@ -365,17 +441,70 @@ void RunScreen::mousePressEvent(QMouseEvent *e)
                 break;
             }
         }
+        showScreen(RunScreen::ScreenBindings);
+        if(QMessageBox::question(this, "ZX Spectrum", tr("Bind next key?"),
+                                            QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes)
+        {
+            showScreen(RunScreen::ScreenBindings);
+        }
+        else
+        {
+            showScreen(RunScreen::ScreenSpectrum);
+        }
     }
-
-    showKeysPng = false;
-    update();
 }
 
 void RunScreen::mouseReleaseEvent(QMouseEvent *e)
 {
-    if(lastKey > 0)
+    releaseAllKeys();
+}
+
+void RunScreen::mouseMoveEvent(QMouseEvent *e)
+{
+    int x = e->x();
+    int y = e->y();
+
+    // Check if we moved to another key
+    int minDist = 0xffff;
+    int newPressedX = 0;
+    int newPressedY = 0;
+    for(int i = 0; i < OSKEYS_SIZE; i++)
     {
-        releaseKey(lastKey);
+        oskey *ki = &(oskeys[i]);
+        if(ki->key <= 0)
+        {
+            continue;
+        }
+        int dist = abs(x - ki->x) + abs(y - ki->y);
+        if(dist < minDist)
+        {
+            minDist = dist;
+            newPressedX = ki->x;
+            newPressedY = ki->y;
+        }
+    }
+
+    if(newPressedX == pressedKeyX && newPressedY == pressedKeyY)
+    {
+        return;
+    }
+    pressedKeyX = newPressedX;
+    pressedKeyY = newPressedY;
+
+    // Release old pressed keys and press new
+    releaseAllKeys();
+    for(int i = 0; i < OSKEYS_SIZE; i++)
+    {
+        oskey *ki = &(oskeys[i]);
+        if(ki->key <= 0)
+        {
+            continue;
+        }
+        int dist = abs(x - ki->x) + abs(y - ki->y);
+        if(ki->x == newPressedX && ki->y == newPressedY)
+        {
+            pressKey(ki->key);
+        }
     }
 }
 
