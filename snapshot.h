@@ -21,6 +21,10 @@
 #ifndef SNAPSHOT_H
 #define SNAPSHOT_H
 
+#ifdef	__cplusplus
+extern	"C" {
+#endif
+
 #define SN_SNA 0
 #define SN_Z80 1
 
@@ -33,5 +37,9 @@ extern void load_snapshot(void);
 
 extern void save_quick_snapshot(void);
 extern void load_quick_snapshot(void);
+
+#ifdef	__cplusplus
+};
+#endif
 
 #endif /* SNAPSHOT_H */
