@@ -136,62 +136,62 @@ bool decodeKey(int key, int *ks, int *shks, int *ki)
     *shks = 0;
     switch(key)
     {
-        case Qt::Key_Escape:    *ks = SK_Escape;                        break;
-        case Qt::Key_1:         *ks = '1';          *shks = '!';        break;
-        case Qt::Key_2:         *ks = '2';          *shks = '@';        break;
-        case Qt::Key_3:         *ks = '3';          *shks = '#';        break;
-        case Qt::Key_4:         *ks = '4';          *shks = '$';        break;
-        case Qt::Key_5:         *ks = '5';          *shks = '%';        break;
-        case Qt::Key_6:         *ks = '6';          *shks = '^';        break;
-        case Qt::Key_7:         *ks = '7';          *shks = '&';        break;
-        case Qt::Key_8:         *ks = '8';          *shks = '*';        break;
-        case Qt::Key_9:         *ks = '9';          *shks = '(';        break;
-        case Qt::Key_0:         *ks = '0';          *shks = ')';        break;
-        case Qt::Key_Minus:     *ks = '-';          *shks = '_';        break;
-        case Qt::Key_Equal:     *ks = '=';          *shks = '+';        break;
-        case Qt::Key_Backspace: *ks = SK_BackSpace;                     break;
-        case Qt::Key_Tab:       *ks = SK_Tab;                           break;
-        case Qt::Key_Q:         *ks = 'q';          *shks = 'Q';        break;
-        case Qt::Key_W:         *ks = 'w';          *shks = 'W';        break;
-        case Qt::Key_E:         *ks = 'e';          *shks = 'E';        break;
-        case Qt::Key_R:         *ks = 'r';          *shks = 'R';        break;
-        case Qt::Key_T:         *ks = 't';          *shks = 'T';        break;
-        case Qt::Key_Y:         *ks = 'y';          *shks = 'Y';        break;
-        case Qt::Key_U:         *ks = 'u';          *shks = 'U';        break;
-        case Qt::Key_I:         *ks = 'i';          *shks = 'I';        break;
-        case Qt::Key_O:         *ks = 'o';          *shks = 'O';        break;
-        case Qt::Key_P:         *ks = 'p';          *shks = 'P';        break;
-        case Qt::Key_BracketLeft:   *ks = '[';      *shks = '{';        break;
-        case Qt::Key_BracketRight:  *ks = ']';      *shks = '}';        break;
-        case Qt::Key_Return:    *ks = SK_Return;                        break;
-        case Qt::Key_Control:   *ks = SK_Control_L;                     break;
-        case Qt::Key_A:         *ks = 'a';          *shks = 'A';        break;
-        case Qt::Key_S:         *ks = 's';          *shks = 'S';        break;
-        case Qt::Key_D:         *ks = 'd';          *shks = 'D';        break;
-        case Qt::Key_F:         *ks = 'f';          *shks = 'F';        break;
-        case Qt::Key_G:         *ks = 'g';          *shks = 'G';        break;
-        case Qt::Key_H:         *ks = 'h';          *shks = 'H';        break;
-        case Qt::Key_J:         *ks = 'j';          *shks = 'J';        break;
-        case Qt::Key_K:         *ks = 'k';          *shks = 'K';        break;
-        case Qt::Key_L:         *ks = 'l';          *shks = 'L';        break;
-        case Qt::Key_Semicolon: *ks = ';';          *shks = ':';        break;
-        case Qt::Key_Apostrophe:*ks = '\'';         *shks = '"';        break;
-        case Qt::Key_QuoteLeft: *ks = '`';          *shks = '~';        break;
-        case Qt::Key_Shift:     *ks = SK_Shift_L;                       break;
-        case Qt::Key_Backslash: *ks = '\\';          *shks = '|';       break;
-        case Qt::Key_Z:         *ks = 'z';          *shks = 'Z';        break;
-        case Qt::Key_X:         *ks = 'x';          *shks = 'X';        break;
-        case Qt::Key_C:         *ks = 'c';          *shks = 'C';        break;
-        case Qt::Key_V:         *ks = 'v';          *shks = 'V';        break;
-        case Qt::Key_B:         *ks = 'b';          *shks = 'B';        break;
-        case Qt::Key_N:         *ks = 'n';          *shks = 'N';        break;
-        case Qt::Key_M:         *ks = 'm';          *shks = 'M';        break;
-        case Qt::Key_Comma:     *ks = ',';          *shks = '<';        break;
-        case Qt::Key_Period:    *ks = '.';          *shks = '>';        break;
-        case Qt::Key_Slash:     *ks = '/';          *shks = '?';        break;
-        case Qt::Key_Space:     *ks = ' ';          *shks = ' ';        break;
-        default:
-            return false;
+    case Qt::Key_Escape:    *ks = SK_Escape;                        break;
+    case Qt::Key_1:         *ks = '1';          *shks = '!';        break;
+    case Qt::Key_2:         *ks = '2';          *shks = '@';        break;
+    case Qt::Key_3:         *ks = '3';          *shks = '#';        break;
+    case Qt::Key_4:         *ks = '4';          *shks = '$';        break;
+    case Qt::Key_5:         *ks = '5';          *shks = '%';        break;
+    case Qt::Key_6:         *ks = '6';          *shks = '^';        break;
+    case Qt::Key_7:         *ks = '7';          *shks = '&';        break;
+    case Qt::Key_8:         *ks = '8';          *shks = '*';        break;
+    case Qt::Key_9:         *ks = '9';          *shks = '(';        break;
+    case Qt::Key_0:         *ks = '0';          *shks = ')';        break;
+    case Qt::Key_Minus:     *ks = '-';          *shks = '_';        break;
+    case Qt::Key_Equal:     *ks = '=';          *shks = '+';        break;
+    case Qt::Key_Backspace: *ks = SK_BackSpace;                     break;
+    case Qt::Key_Tab:       *ks = SK_Tab;                           break;
+    case Qt::Key_Q:         *ks = 'q';          *shks = 'Q';        break;
+    case Qt::Key_W:         *ks = 'w';          *shks = 'W';        break;
+    case Qt::Key_E:         *ks = 'e';          *shks = 'E';        break;
+    case Qt::Key_R:         *ks = 'r';          *shks = 'R';        break;
+    case Qt::Key_T:         *ks = 't';          *shks = 'T';        break;
+    case Qt::Key_Y:         *ks = 'y';          *shks = 'Y';        break;
+    case Qt::Key_U:         *ks = 'u';          *shks = 'U';        break;
+    case Qt::Key_I:         *ks = 'i';          *shks = 'I';        break;
+    case Qt::Key_O:         *ks = 'o';          *shks = 'O';        break;
+    case Qt::Key_P:         *ks = 'p';          *shks = 'P';        break;
+    case Qt::Key_BracketLeft:   *ks = '[';      *shks = '{';        break;
+    case Qt::Key_BracketRight:  *ks = ']';      *shks = '}';        break;
+    case Qt::Key_Return:    *ks = SK_Return;                        break;
+    case Qt::Key_Control:   *ks = SK_Control_L;                     break;
+    case Qt::Key_A:         *ks = 'a';          *shks = 'A';        break;
+    case Qt::Key_S:         *ks = 's';          *shks = 'S';        break;
+    case Qt::Key_D:         *ks = 'd';          *shks = 'D';        break;
+    case Qt::Key_F:         *ks = 'f';          *shks = 'F';        break;
+    case Qt::Key_G:         *ks = 'g';          *shks = 'G';        break;
+    case Qt::Key_H:         *ks = 'h';          *shks = 'H';        break;
+    case Qt::Key_J:         *ks = 'j';          *shks = 'J';        break;
+    case Qt::Key_K:         *ks = 'k';          *shks = 'K';        break;
+    case Qt::Key_L:         *ks = 'l';          *shks = 'L';        break;
+    case Qt::Key_Semicolon: *ks = ';';          *shks = ':';        break;
+    case Qt::Key_Apostrophe:*ks = '\'';         *shks = '"';        break;
+    case Qt::Key_QuoteLeft: *ks = '`';          *shks = '~';        break;
+    case Qt::Key_Shift:     *ks = SK_Shift_L;                       break;
+    case Qt::Key_Backslash: *ks = '\\';          *shks = '|';       break;
+    case Qt::Key_Z:         *ks = 'z';          *shks = 'Z';        break;
+    case Qt::Key_X:         *ks = 'x';          *shks = 'X';        break;
+    case Qt::Key_C:         *ks = 'c';          *shks = 'C';        break;
+    case Qt::Key_V:         *ks = 'v';          *shks = 'V';        break;
+    case Qt::Key_B:         *ks = 'b';          *shks = 'B';        break;
+    case Qt::Key_N:         *ks = 'n';          *shks = 'N';        break;
+    case Qt::Key_M:         *ks = 'm';          *shks = 'M';        break;
+    case Qt::Key_Comma:     *ks = ',';          *shks = '<';        break;
+    case Qt::Key_Period:    *ks = '.';          *shks = '>';        break;
+    case Qt::Key_Slash:     *ks = '/';          *shks = '?';        break;
+    case Qt::Key_Space:     *ks = ' ';          *shks = ' ';        break;
+    default:
+        return false;
     }
     if(*shks == 0)
     {
@@ -325,12 +325,13 @@ void RunScreen::paintEvent(QPaintEvent *)
             {
                 continue;
             }
-            p.fillRect(ki->x - 16, ki->y - 16, 32, 32, QColor(64, 64, 64, 64));
-            p.setPen(QColor(255, 255, 255, 255));
-
+            QRect rect(ki->x - 16, ki->y - 16, 32, 32);
             QString key(QChar(ki->key));
-            p.drawText(ki->x, ki->y, key);
+            p.fillRect(rect, QColor(64, 64, 64, 64));
+            p.setPen(QColor(255, 255, 255, 255));
+            p.drawText(rect, key, QTextOption(Qt::AlignCenter));
         }
+        p.drawText(this->rect(), tr("Click screen to place key"), QTextOption(Qt::AlignCenter));
     }
 }
 
@@ -375,7 +376,6 @@ void RunScreen::mousePressEvent(QMouseEvent *e)
             {
                 continue;
             }
-            int dist = abs(x - ki->x) + abs(y - ki->y);
             if(ki->x == pressedKeyX && ki->y == pressedKeyY)
             {
                 pressKey(ki->key);
@@ -407,8 +407,8 @@ void RunScreen::mousePressEvent(QMouseEvent *e)
                 {
                     // Replace binding or assign one more key?
                     QString key(QChar(ki->key));
-                    if(QMessageBox::question(this, "Bind key", tr("Replace") + " '" + key + "' ?",
-                                 QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes)
+                    if(QMessageBox::question(this, "Bind key", tr("Add (YES) or replace (NO)") + " '" + key + "' ?",
+                                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::No)
                     {
                         ki->key = 0;    // replace binding
                     }
@@ -443,12 +443,13 @@ void RunScreen::mousePressEvent(QMouseEvent *e)
         }
         showScreen(RunScreen::ScreenBindings);
         if(QMessageBox::question(this, "ZX Spectrum", tr("Bind next key?"),
-                                            QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes)
+                                 QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes)
         {
             showScreen(RunScreen::ScreenBindings);
         }
         else
         {
+            qspectemu->saveCurrentProgCfg();
             showScreen(RunScreen::ScreenSpectrum);
         }
     }
@@ -509,7 +510,7 @@ void RunScreen::mouseMoveEvent(QMouseEvent *e)
 }
 
 QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
-    : QWidget(parent)
+        : QWidget(parent)
 {
 #ifdef QTOPIA
     this->setWindowState(Qt::WindowMaximized);
@@ -519,7 +520,6 @@ QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
 #endif
 
     lw = new QListWidget(this);
-    fillLw();
 
     bOk = new QPushButton(tr("Run"), this);
     connect(bOk, SIGNAL(clicked()), this, SLOT(okClicked()));
@@ -536,7 +536,9 @@ QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
     argv = 0;
     counter.start();
     qspectemu = this;
-//    QTimer::singleShot(1, this, SLOT(startSpectemu()));
+
+    loadCfg(NULL);
+    //    QTimer::singleShot(1, this, SLOT(startSpectemu()));
 }
 
 QSpectemu::~QSpectemu()
@@ -555,12 +557,142 @@ QSpectemu::~QSpectemu()
     }
 }
 
-void QSpectemu::fillLw()
+// Load global cfg (progFile==NULL) or cfg for given program
+void QSpectemu::loadCfg(QString prog)
 {
-    lw->clear();
+    bool list = (prog == NULL);
+    if(list)
+    {
+        lw->clear();
+    }
 
-    QListWidgetItem *item = new QListWidgetItem("Jetpac", lw, QListWidgetItem::UserType);
-    lw->addItem(item);
+    QDomDocument doc;
+    QFile f(QDir::homePath() + "/.qspectemu/qspectemu.xml");
+    if(!f.open(QIODevice::ReadOnly))
+    {
+        return;
+    }
+    if (!doc.setContent(&f))
+    {
+        f.close();
+        return;
+    }
+    QDomElement root = doc.documentElement();
+    QDomNodeList progs = root.childNodes();
+    for(int i = 0; i < progs.count(); i++)
+    {
+        QDomNode progNode = progs.at(i);
+        QString file = progNode.attributes().namedItem("file").nodeValue();
+
+        if(list)
+        {
+            QListWidgetItem *item = new QListWidgetItem(file, lw, QListWidgetItem::UserType);
+            lw->addItem(item);
+            continue;
+        }
+
+        if(file != prog)
+        {
+            continue;
+        }
+        QDomNode bindsElem = progNode.namedItem("binds");
+        if(bindsElem.isNull())
+        {
+            continue;
+        }
+        QDomNodeList binds = bindsElem.childNodes();
+        for(int j = 0; j < OSKEYS_SIZE; j++)
+        {
+            oskey *k = &(oskeys[j]);
+            if(j >= binds.count())
+            {
+                k->key = 0;
+                continue;
+            }
+            QDomNode bind = binds.at(i);
+            k->key =  bind.attributes().namedItem("key").nodeValue().toInt();
+            k->x = bind.attributes().namedItem("x").nodeValue().toInt();
+            k->y = bind.attributes().namedItem("y").nodeValue().toInt();
+        }
+    }
+
+    f.close();
+}
+
+// Save global cfg (progFile==NULL) or cfg for given program
+void QSpectemu::saveCfg(QString prog)
+{
+    QDomDocument doc;
+    QString cfgFile = QDir::homePath() + "/.qspectemu/qspectemu.xml";
+    QFile f(cfgFile);
+    if(!f.open(QIODevice::ReadOnly))
+    {
+        return;
+    }
+    if(!doc.setContent(&f))
+    {
+        f.close();
+        return;
+    }
+    f.close();
+
+    QDomElement root = doc.documentElement();
+    QDomNodeList progs = root.childNodes();
+    for(int i = 0; i < progs.count(); i++)
+    {
+        QDomNode progNode = progs.at(i);
+        QString file = progNode.attributes().namedItem("file").nodeValue();
+
+        if(file != prog)
+        {
+            continue;
+        }
+        QDomNode bindsElem = progNode.namedItem("binds");
+        if(bindsElem.isNull())
+        {
+            bindsElem = doc.createElement("binds");
+            progNode.appendChild(bindsElem);
+        }
+        
+        QDomNodeList binds = bindsElem.childNodes();
+
+        while(binds.length() > 0)
+        {
+            bindsElem.removeChild(binds.at(0));
+        }
+        for(int j = 0; j < OSKEYS_SIZE; j++)
+        {
+            oskey *k = &(oskeys[j]);
+            if(k->key <= 0)
+            {
+                break;
+            }            
+            QDomNode bind = doc.createElement("bind");
+            bindsElem.appendChild(bind);
+
+            QDomNode attrKey = doc.createAttribute("key");
+            QDomNode attrX = doc.createAttribute("x");
+            QDomNode attrY = doc.createAttribute("y");
+
+            attrKey.setNodeValue(QString::number(k->key));
+            attrX.setNodeValue(QString::number(k->x));
+            attrY.setNodeValue(QString::number(k->y));
+
+            bind.appendChild(attrKey);
+            bind.appendChild(attrX);
+            bind.appendChild(attrY);
+        }
+    }
+
+    f.open(QIODevice::WriteOnly);
+    QTextStream ts(&f);
+    ts << doc.toString();
+    f.close();
+}
+
+void QSpectemu::saveCurrentProgCfg()
+{
+    saveCfg(currentProg);
 }
 
 void QSpectemu::okClicked()
@@ -579,6 +711,16 @@ void QSpectemu::okClicked()
     spcf_pre_check_options(argc, argv);
     check_params(argc, argv);
     sp_init();
+
+    QListWidgetItem *sel = lw->currentItem();
+    if(sel == NULL)
+    {
+        return;
+    }
+    currentProg = sel->text();
+    loadCfg(currentProg);
+
+    load_snapshot_file_type(currentProg.toLatin1().data(), -1);
 
     start_spectemu();
 }
@@ -609,9 +751,9 @@ void init_spect_scr(void)
     scr.setNumColors(COLORNUM);
     for(int i = 0; i < COLORNUM; i++)
     {
-        rgb c = spscr_crgb[i];
-        QRgb qc = qRgb(c.r * 4, c.g * 4, c.b * 4);
-        scr.setColor(i, qc);
+	rgb c = spscr_crgb[i];
+	QRgb qc = qRgb(c.r * 4, c.g * 4, c.b * 4);
+	scr.setColor(i, qc);
     }
     sp_image = (char *) scr.bits();
 
@@ -648,19 +790,42 @@ void update_screen(void)
     int bottom = 0;
     for(int i = 0; i < HEIGHT; i++)
     {
-        if(sp_imag_mark[i] == 0)
-        {
-            continue;
-        }
-        if(top < 0)
-        {
-            top = i;
-        }
-        bottom = i;
-        sp_imag_mark[i] = 0;
+	if(sp_imag_mark[i] == 0)
+	{
+	    continue;
+	}
+	if(top < 0)
+	{
+	    top = i;
+	}
+	bottom = i;
+	sp_imag_mark[i] = 0;
     }
 
     runScr->update(0, top + scrTop, TV_WIDTH, scrTop + bottom + 1);
+
+    //    int top = -1;
+    //    int lastMark = 0;
+    //    QRegion r;
+    //    for(int i = 0; i < HEIGHT; i++)
+    //    {
+    //        int mark = sp_imag_mark[i];
+    //        sp_imag_mark[i] = 0;
+    //        if(mark == lastMark)
+    //        {
+    //            continue;
+    //        }
+    //        lastMark = mark;
+    //        if(mark)
+    //        {
+    //            top = i;
+    //        }
+    //        else
+    //        {
+    //            r = r.united(QRect(0, top + scrTop, TV_WIDTH, scrTop + i + 1));
+    //        }
+    //    }
+    //    runScr->update(r);
 }
 
 void destroy_spect_scr(void)

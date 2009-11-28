@@ -1,6 +1,7 @@
 TEMPLATE = app
 TARGET = spectemu
 CONFIG += qtopia
+QT += xml
 LIBS += -lX11
 DEFINES += HAVE_MITSHM \
     HAVE_SHMQUERY \

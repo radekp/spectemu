@@ -14,6 +14,8 @@
 #include <QListWidgetItem>
 #include <QProcess>
 #include <QMessageBox>
+#include <QtXml>
+#include <QFile>
 #ifdef QTOPIA
 #include <QtopiaApplication>
 #endif
@@ -25,6 +27,7 @@
 #include "misc.h"
 #include "spconf.h"
 #include "spscr_p.h"
+#include "snapshot.h"
 
 #define TV_WIDTH   320
 #define TV_HEIGHT  192
@@ -78,6 +81,7 @@ class QSpectemu : public QWidget
 public:
     QSpectemu(QWidget *parent = 0, Qt::WFlags f = 0);
     ~QSpectemu();
+    void saveCurrentProgCfg();
 
 private:
     int argc;
@@ -85,6 +89,9 @@ private:
     QListWidget *lw;
     QPushButton *bOk;
     QVBoxLayout *layout;
+    QString currentProg;
+    void loadCfg(QString prog);
+    void saveCfg(QString prog);
     void fillLw();
 
 private slots:
