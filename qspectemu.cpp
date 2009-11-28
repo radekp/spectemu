@@ -81,6 +81,12 @@ static struct oskey oskeyspng[] = {
 #define OSKEYS_SIZE (int)(sizeof(oskeys) / sizeof(oskey))
 #define OSKEYSPNG_SIZE (int)(sizeof(oskeyspng) / sizeof(oskey))
 
+static void showErr(QWidget *parent, QString err)
+{
+    qWarning() << err;
+    QMessageBox::critical(parent, "qspectemu", err);
+}
+
 RunScreen::RunScreen()
 {
     scrTop = 0;
@@ -89,8 +95,12 @@ RunScreen::RunScreen()
 
 void RunScreen::showScreen()
 {
+#if QTOPIA
     showMaximized();
     enterFullScreen();
+#else
+    showNormal();
+#endif
 }
 
 void RunScreen::enterFullScreen()
@@ -574,45 +584,42 @@ void QSpectemu::loadCfg(QString prog)
     }
     if (!doc.setContent(&f))
     {
+        showErr(this, tr("Error while reading ") + f.fileName());
         f.close();
         return;
     }
     QDomElement root = doc.documentElement();
-    QDomNodeList progs = root.childNodes();
-    for(int i = 0; i < progs.count(); i++)
+    for(QDomElement progElem = doc.firstChildElement("qspectemu").firstChildElement("prog"); !progElem.isNull(); progElem = progElem.nextSiblingElement("prog"))
     {
-        QDomNode progNode = progs.at(i);
-        QString file = progNode.attributes().namedItem("file").nodeValue();
-
+        QString file = progElem.attribute("file");
         if(list)
         {
             QListWidgetItem *item = new QListWidgetItem(file, lw, QListWidgetItem::UserType);
             lw->addItem(item);
             continue;
         }
-
         if(file != prog)
         {
             continue;
         }
-        QDomNode bindsElem = progNode.namedItem("binds");
+        QDomElement bindsElem = progElem.firstChildElement("binds");
         if(bindsElem.isNull())
         {
             continue;
         }
-        QDomNodeList binds = bindsElem.childNodes();
+        QDomElement bind = bindsElem.firstChildElement("bind");
         for(int j = 0; j < OSKEYS_SIZE; j++)
         {
             oskey *k = &(oskeys[j]);
-            if(j >= binds.count())
+            if(bind.isNull())
             {
                 k->key = 0;
                 continue;
             }
-            QDomNode bind = binds.at(i);
-            k->key =  bind.attributes().namedItem("key").nodeValue().toInt();
-            k->x = bind.attributes().namedItem("x").nodeValue().toInt();
-            k->y = bind.attributes().namedItem("y").nodeValue().toInt();
+            k->key = bind.attribute("key").toInt();
+            k->x = bind.attribute("x").toInt();
+            k->y = bind.attribute("y").toInt();
+            bind = bind.nextSiblingElement("bind");
         }
     }
 
@@ -625,37 +632,38 @@ void QSpectemu::saveCfg(QString prog)
     QDomDocument doc;
     QString cfgFile = QDir::homePath() + "/.qspectemu/qspectemu.xml";
     QFile f(cfgFile);
-    if(!f.open(QIODevice::ReadOnly))
+    if(f.exists())
     {
-        return;
+        if(f.open(QIODevice::ReadOnly))
+        {
+            if(!doc.setContent(&f))
+            {
+                showErr(this, tr("Error while parsing xml parsing file ") + cfgFile);
+            }
+            f.close();
+        }
+        else
+        {
+            showErr(this, tr("Error while opening cfg file ") + cfgFile + " " + f.errorString());
+        }
     }
-    if(!doc.setContent(&f))
-    {
-        f.close();
-        return;
-    }
-    f.close();
 
     QDomElement root = doc.documentElement();
-    QDomNodeList progs = root.childNodes();
-    for(int i = 0; i < progs.count(); i++)
+    for(QDomElement progElem = root.firstChildElement("prog"); !progElem.isNull(); progElem = progElem.nextSiblingElement("prog"))
     {
-        QDomNode progNode = progs.at(i);
-        QString file = progNode.attributes().namedItem("file").nodeValue();
-
+        QString file = progElem.attribute("file");
         if(file != prog)
         {
             continue;
         }
-        QDomNode bindsElem = progNode.namedItem("binds");
+        QDomElement bindsElem = progElem.firstChildElement("binds");
         if(bindsElem.isNull())
         {
             bindsElem = doc.createElement("binds");
-            progNode.appendChild(bindsElem);
+            progElem.appendChild(bindsElem);
         }
         
         QDomNodeList binds = bindsElem.childNodes();
-
         while(binds.length() > 0)
         {
             bindsElem.removeChild(binds.at(0));
@@ -666,25 +674,20 @@ void QSpectemu::saveCfg(QString prog)
             if(k->key <= 0)
             {
                 break;
-            }            
-            QDomNode bind = doc.createElement("bind");
+            }
+            QDomElement bind = doc.createElement("bind");
+            bind.setAttribute("key", QString::number(k->key));
+            bind.setAttribute("x", QString::number(k->x));
+            bind.setAttribute("y", QString::number(k->y));
             bindsElem.appendChild(bind);
-
-            QDomNode attrKey = doc.createAttribute("key");
-            QDomNode attrX = doc.createAttribute("x");
-            QDomNode attrY = doc.createAttribute("y");
-
-            attrKey.setNodeValue(QString::number(k->key));
-            attrX.setNodeValue(QString::number(k->x));
-            attrY.setNodeValue(QString::number(k->y));
-
-            bind.appendChild(attrKey);
-            bind.appendChild(attrX);
-            bind.appendChild(attrY);
         }
     }
 
-    f.open(QIODevice::WriteOnly);
+    if(!f.open(QIODevice::WriteOnly))
+    {
+        showErr(this, tr("Error while saving cfg file ") + cfgFile);
+        return;
+    }
     QTextStream ts(&f);
     ts << doc.toString();
     f.close();
