@@ -91,6 +91,7 @@ RunScreen::RunScreen()
 {
     scrTop = 0;
     screen = RunScreen::ScreenSpectrumUnbinded;
+    kbpix.load(":/qspectkey.png");
 }
 
 void RunScreen::showScreen()
@@ -261,8 +262,15 @@ static void releaseAllKeys()
     process_keys();
 }
 
-static int getKeyPng(int x, int y)
+int RunScreen::getKeyPng(int x, int y)
 {
+    // Small screen - pressed bottom part of keyboard?
+    if(kbpix.width() > width() && y > kbpix.height())
+    {
+        y -= kbpix.height();
+        x += kbpix.width() - width();
+    }
+
     for(int i = 0; i < OSKEYSPNG_SIZE; i++)
     {
         oskey *ki = &(oskeyspng[i]);
@@ -319,7 +327,6 @@ void RunScreen::paintEvent(QPaintEvent *)
     else if(screen == RunScreen::ScreenKeyboardPng ||
             screen == RunScreen::ScreenKeyboardPngBind)
     {
-        QPixmap kbpix(":/qspectkey.png");
         p.drawPixmap(0, 0, kbpix);
         if(kbpix.width() > width())
         {
@@ -408,6 +415,7 @@ void RunScreen::mousePressEvent(QMouseEvent *e)
     {
         int x = e->x();
         int y = e->y();
+
         for(int i = 0; i < OSKEYS_SIZE; i++)
         {
             oskey *ki = &(oskeys[i]);

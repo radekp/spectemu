@@ -65,9 +65,11 @@ private:
     };
 
     Screen screen;
+    QPixmap kbpix;
     int pressedKeyX;                // x and y of pressed on screen key
     int pressedKeyY;
     void showScreen(Screen screen);
+    int getKeyPng(int x, int y);
 
 private slots:
     void showScreenKeyboardPngBind();
