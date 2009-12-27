@@ -5,7 +5,9 @@ QSpectemu *qspectemu;           // instance
 RunScreen *runScr;
 ProgMenu *progMenu;
 QImage scr;                     // bitmap with speccy screen
+QImage scrR;                    // bitmap for rotated speccy screen
 int scrTop;                     // used in qvga mode
+bool rotated;
 QTime counter;
 
 // On screen key info
@@ -323,7 +325,28 @@ void RunScreen::paintEvent(QPaintEvent *)
     if(screen == RunScreen::ScreenSpectrum ||
        screen == RunScreen::ScreenSpectrumUnbinded)
     {
-        p.drawImage(0, scrTop, scr);
+        if(rotated)
+        {
+            char *s = sp_image;
+            char *rStart = (char *)scrR.bits();
+            char *r = rStart;
+
+            for(int y = 0; y < TV_HEIGHT; y++)
+            {
+                r = rStart + y + (TV_WIDTH - 1) * TV_HEIGHT;
+                for(int x = 0; x < TV_WIDTH; x++)
+                {
+                    *r = *s;
+                    s++;
+                    r -= TV_HEIGHT;
+                }
+            }
+            p.drawImage(0, scrTop, scrR);
+        }
+        else
+        {
+            p.drawImage(0, scrTop, scr);
+        }
     }
     else if(screen == RunScreen::ScreenKeyboardPng ||
             screen == RunScreen::ScreenKeyboardPngBind)
@@ -595,6 +618,7 @@ QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
 
     argc = 0;
     argv = 0;
+    rotated = false;
     counter.start();
     qspectemu = this;
 
@@ -640,7 +664,7 @@ void QSpectemu::loadCfg(QString prog)
         {
             return;
         }
-        f.write("<qspectemu>\n  <prog file=\"program1.sna\"></prog>\n</qspectemu>");
+        f.write("<qspectemu>\n  <prog file=\"program1.sna\" rotate=\"no\"></prog>\n</qspectemu>");
         f.close();
     }
     if(!f.open(QIODevice::ReadOnly))
@@ -667,6 +691,11 @@ void QSpectemu::loadCfg(QString prog)
         {
             continue;
         }
+
+        // Read settings for matching program
+        QString rotateAttr = progElem.attribute("rotate");
+        rotated = (rotateAttr == "yes");
+
         QDomElement bindsElem = progElem.firstChildElement("binds");
         if(bindsElem.isNull())
         {
@@ -817,12 +846,15 @@ void init_spect_scr(void)
     spscr_init_mask_color();
 
     scr = QImage(TV_WIDTH, TV_HEIGHT, QImage::Format_Indexed8);
+    scrR = QImage(TV_HEIGHT, TV_WIDTH, QImage::Format_Indexed8);
     scr.setNumColors(COLORNUM);
+    scrR.setNumColors(COLORNUM);
     for(int i = 0; i < COLORNUM; i++)
     {
 	rgb c = spscr_crgb[i];
 	QRgb qc = qRgb(c.r * 4, c.g * 4, c.b * 4);
 	scr.setColor(i, qc);
+        scrR.setColor(i, qc);
     }
     sp_image = (char *) scr.bits();
 
@@ -871,7 +903,15 @@ void update_screen(void)
 	sp_imag_mark[i] = 0;
     }
 
-    runScr->update(0, top + scrTop, TV_WIDTH, scrTop + bottom + 1);
+    if(rotated)
+    {
+        runScr->update(top + scrTop, 0, scrTop + bottom + 1, TV_WIDTH);
+    }
+    else
+    {
+        runScr->update(0, top + scrTop, TV_WIDTH, scrTop + bottom + 1);
+    }
+    //runScr->update();
 
     //    int top = -1;
     //    int lastMark = 0;
