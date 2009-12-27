@@ -3,6 +3,7 @@
 
 QSpectemu *qspectemu;           // instance
 RunScreen *runScr;
+ProgMenu *progMenu;
 QImage scr;                     // bitmap with speccy screen
 int scrTop;                     // used in qvga mode
 QTime counter;
@@ -401,15 +402,12 @@ void RunScreen::mousePressEvent(QMouseEvent *e)
     }
     else if(screen == RunScreen::ScreenSpectrumUnbinded)
     {
-        if(QMessageBox::question(this, "ZX Spectrum", tr("Bind keys?"),
-                                 QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes)
-        {
-            showScreen(RunScreen::ScreenBindings);
-        }
-        else
-        {
-            showScreen(RunScreen::ScreenSpectrum);
-        }
+#ifdef QTOPIA
+        progMenu->showMaximized();
+#else
+        progMenu->showNormal();
+#endif
+        hide();
     }
     else if(screen == RunScreen::ScreenBindings)
     {
@@ -527,6 +525,50 @@ void RunScreen::mouseMoveEvent(QMouseEvent *e)
     }
 }
 
+ProgMenu::ProgMenu()
+{
+    bBinds = new QPushButton(tr("Bindings"), this);
+    connect(bBinds, SIGNAL(clicked()), this, SLOT(bindsClicked()));
+
+    bKbd = new QPushButton(tr("Keyboard"), this);
+    connect(bKbd, SIGNAL(clicked()), this, SLOT(kbdClicked()));
+
+    bQuit = new QPushButton(tr("Quit"), this);
+    connect(bQuit, SIGNAL(clicked()), this, SLOT(quitClicked()));
+
+    bContinue = new QPushButton(tr("Continue"), this);
+    connect(bContinue, SIGNAL(clicked()), this, SLOT(continueClicked()));
+
+    layout = new QVBoxLayout(this);
+    layout->addWidget(bBinds);
+    layout->addWidget(bKbd);
+    layout->addWidget(bQuit);
+    layout->addWidget(bContinue);
+
+    progMenu = this;
+}
+
+void ProgMenu::bindsClicked()
+{
+    hide();
+    runScr->showScreen(RunScreen::ScreenBindings);
+    runScr->showScreen();
+}
+
+void ProgMenu::kbdClicked()
+{
+}
+
+void ProgMenu::quitClicked()
+{
+}
+
+void ProgMenu::continueClicked()
+{
+    hide();
+    runScr->showScreen();
+}
+
 QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
         : QWidget(parent)
 {
@@ -547,6 +589,7 @@ QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
     layout->addWidget(bOk);
 
     runScr = new RunScreen();
+    progMenu = new ProgMenu();
 
     //setAttribute(Qt::WA_NoSystemBackground);
 
@@ -708,6 +751,7 @@ void QSpectemu::saveCurrentProgCfg()
 
 void QSpectemu::okClicked()
 {
+    hide();
     runScr->showScreen();
 
     QStringList args = QApplication::arguments();

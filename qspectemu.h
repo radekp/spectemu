@@ -40,8 +40,18 @@ class RunScreen : public QWidget
     Q_OBJECT
 
 public:
+    enum Screen
+    {
+        ScreenSpectrumUnbinded,     // running spectrum, no keys binded
+        ScreenSpectrum,             // running spectrum
+        ScreenKeyboardPng,          // big on screen keyboard
+        ScreenKeyboardPngBind,      // big on screen keyboard while binding key
+        ScreenBindings,             // showing how keys are binded and allow edit/add keys
+    };
+
     RunScreen();
     void showScreen();
+    void showScreen(Screen screen);
     void setRes(int xy);
 
 protected:
@@ -55,26 +65,36 @@ protected:
     void mouseMoveEvent(QMouseEvent *);
 
 private:
-    enum Screen
-    {
-        ScreenSpectrumUnbinded,     // running spectrum, no keys binded
-        ScreenSpectrum,             // running spectrum
-        ScreenKeyboardPng,          // big on screen keyboard
-        ScreenKeyboardPngBind,      // big on screen keyboard while binding key
-        ScreenBindings,             // showing how keys are binded and allow edit/add keys
-    };
-
     Screen screen;
     QPixmap kbpix;
     int pressedKeyX;                // x and y of pressed on screen key
     int pressedKeyY;
-    void showScreen(Screen screen);
     int getKeyPng(int x, int y);
 
-private slots:
+public slots:
     void showScreenKeyboardPngBind();
 };
 
+class ProgMenu : public QWidget
+{
+    Q_OBJECT
+
+public:
+    ProgMenu();
+
+private:
+    QPushButton *bBinds;
+    QPushButton *bKbd;
+    QPushButton *bQuit;
+    QPushButton *bContinue;
+    QVBoxLayout *layout;
+
+private slots:
+    void bindsClicked();
+    void kbdClicked();
+    void quitClicked();
+    void continueClicked();
+};
 
 class QSpectemu : public QWidget
 {
