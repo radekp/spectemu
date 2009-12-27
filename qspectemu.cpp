@@ -577,7 +577,21 @@ void QSpectemu::loadCfg(QString prog)
     }
 
     QDomDocument doc;
-    QFile f(QDir::homePath() + "/.qspectemu/qspectemu.xml");
+    QDir dir(QDir::homePath() + "/.qspectemu");
+    if(!dir.exists())
+    {
+        dir.mkpath(dir.path());
+    }
+    QFile f(dir.filePath("qspectemu.xml"));
+    if(!f.exists())
+    {
+        if(!f.open(QIODevice::WriteOnly))
+        {
+            return;
+        }
+        f.write("<qspectemu>\n  <prog file=\"program1.sna\"></prog>\n</qspectemu>");
+        f.close();
+    }
     if(!f.open(QIODevice::ReadOnly))
     {
         return;
