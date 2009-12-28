@@ -45,19 +45,17 @@ public:
     {
         ScreenProgList,             // list of available programs
         ScreenProgMenu,             // menu for slected program options
-        ScreenProgRunning,          // program is running
-        ScreenSpectrumUnbinded,     // running spectrum, no keys binded
-        ScreenSpectrum,             // running spectrum
         ScreenKeyboardPng,          // big on screen keyboard
         ScreenKeyboardPngBind,      // big on screen keyboard while binding key
         ScreenBindings,             // showing how keys are binded and allow edit/add keys
+        ScreenProgRunning,          // program is running
     };
 
     QSpectemu(QWidget *parent = 0, Qt::WFlags f = 0);
     ~QSpectemu();
 
     void showScreen(QSpectemu::Screen);
-    void setRes(int xy);
+    bool setRes(int xy);
 
 private:
     int argc;
@@ -70,7 +68,7 @@ private:
     QListWidget *lw;
     QPushButton *bOk;
     QVBoxLayout *layout;
-    QPushButton *bBinds;
+    QPushButton *bBind;
     QPushButton *bKbd;
     QPushButton *bQuit;
     QCheckBox *chkQvga;
@@ -86,7 +84,7 @@ private:
 
 private slots:
     void okClicked();
-    void bindsClicked();
+    void bindClicked();
     void kbdClicked();
     void quitClicked();
     void showScreenKeyboardPngBind();
