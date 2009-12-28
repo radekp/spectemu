@@ -1,13 +1,16 @@
 #include "qspectemu.h"
 #include "spkey_p.h"
 
-QSpectemu *qspectemu;           // instance
-RunScreen *runScr;
-ProgMenu *progMenu;
-QImage scr;                     // bitmap with speccy screen
-QImage scrR;                    // bitmap for rotated speccy screen
-int scrTop;                     // used in qvga mode
-bool rotated;
+QSpectemu *qspectemu = NULL;            // instance
+QSpectemu *fullScreenWidget = NULL;     // fullscreen instance (needed for Qtopia)
+QSpectemu *normalScreenWidget = NULL;   // non-fullscreen instance
+QImage scr;                             // bitmap with speccy screen
+QImage scrR;                            // bitmap for rotated speccy screen
+int scrTop;                             // used in qvga mode
+bool rotated;                           // true for display rotated
+bool fullScreen;                        // true to play in fullscreen
+bool qvga;                              // true to display in qvga (320x240)
+bool virtKeyb;                          // true to display virtual keyboard
 QTime counter;
 
 // On screen key info
@@ -83,67 +86,6 @@ static struct oskey oskeyspng[] = {
 
 #define OSKEYS_SIZE (int)(sizeof(oskeys) / sizeof(oskey))
 #define OSKEYSPNG_SIZE (int)(sizeof(oskeyspng) / sizeof(oskey))
-
-static void showErr(QWidget *parent, QString err)
-{
-    qWarning() << err;
-    QMessageBox::critical(parent, "qspectemu", err);
-}
-
-RunScreen::RunScreen()
-{
-    scrTop = 0;
-    screen = RunScreen::ScreenSpectrumUnbinded;
-    kbpix.load(":/qspectkey.png");
-}
-
-void RunScreen::showScreen()
-{
-#if QTOPIA
-    showMaximized();
-    enterFullScreen();
-#else
-    showNormal();
-#endif
-}
-
-void RunScreen::enterFullScreen()
-{
-#ifdef QTOPIA
-    // Show editor view in full screen
-    setWindowFlags(windowFlags() | Qt::WindowStaysOnTopHint);
-    setWindowState(Qt::WindowFullScreen);
-    raise();
-#endif
-}
-
-void RunScreen::setRes(int xy)
-{
-#ifdef QTOPIA
-    if(xy == 320240 || xy == 640480)
-    {
-        QFile f("/sys/bus/spi/devices/spi2.0/state");
-        f.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate);
-        if(xy == 320240)
-        {
-            QProcess p(this);
-            p.start("fbset", QStringList("qvga"));
-            p.waitForFinished(5000);
-            f.write("qvga-normal");
-        }
-        else if(xy == 640480)
-        {
-            QProcess p(this);
-            p.start("fbset", QStringList("vga"));
-            p.waitForFinished(5000);
-            f.write("normal");
-        }
-        f.close();
-    }
-#else
-    Q_UNUSED(xy);
-#endif
-}
 
 bool decodeKey(int key, int *ks, int *shks, int *ki)
 {
@@ -265,7 +207,187 @@ static void releaseAllKeys()
     process_keys();
 }
 
-int RunScreen::getKeyPng(int x, int y)
+static void showErr(QWidget *parent, QString err)
+{
+    qWarning() << err;
+    QMessageBox::critical(parent, "qspectemu", err);
+}
+
+QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
+        : QWidget(parent)
+{
+#ifdef QTOPIA
+    this->setWindowState(Qt::WindowMaximized);
+    QtopiaApplication::setInputMethodHint(this, QtopiaApplication::AlwaysOn);
+#else
+    Q_UNUSED(f);
+#endif
+
+    // Initialize only minimum for fullscreen widget
+    if(normalScreenWidget != NULL)
+    {
+        fullScreenWidget = this;
+        return;
+    }
+
+    lw = new QListWidget(this);
+
+    bOk = new QPushButton(tr(">"), this);
+    connect(bOk, SIGNAL(clicked()), this, SLOT(okClicked()));
+
+    bBinds = new QPushButton(tr("Bindings"), this);
+    connect(bBinds, SIGNAL(clicked()), this, SLOT(bindsClicked()));
+
+    bKbd = new QPushButton(tr("Keyboard"), this);
+    connect(bKbd, SIGNAL(clicked()), this, SLOT(kbdClicked()));
+
+    bQuit = new QPushButton(tr("Quit"), this);
+    connect(bQuit, SIGNAL(clicked()), this, SLOT(quitClicked()));
+
+    chkFullScreen = new QCheckBox(tr("Fullscreen"), this);
+    chkRotate = new QCheckBox(tr("Rotate"), this);
+    chkQvga = new QCheckBox(tr("Qvga (320x240)"), this);
+    chkVirtKeyb = new QCheckBox(tr("Virtual keyboard"), this);
+
+    layout = new QVBoxLayout(this);
+    layout->addWidget(lw);
+    layout->addWidget(chkFullScreen);
+    layout->addWidget(chkRotate);
+    layout->addWidget(chkQvga);
+    layout->addWidget(chkVirtKeyb);
+    layout->addWidget(bBinds);
+    layout->addWidget(bKbd);
+    layout->addWidget(bQuit);
+    layout->addWidget(bOk);
+
+    scrTop = 0;
+    kbpix.load(":/qspectkey.png");
+
+    //setAttribute(Qt::WA_NoSystemBackground);
+
+    argc = 0;
+    argv = 0;
+    rotated = false;
+    counter.start();
+
+    normalScreenWidget = qspectemu = this;
+    fullScreenWidget = new QSpectemu();
+
+    loadCfg(NULL);
+    showScreen(QSpectemu::ScreenProgList);
+}
+
+QSpectemu::~QSpectemu()
+{
+    for(int i = 0; i < argc; )
+    {
+        if(argv[i])
+        {
+            free(argv[i]);
+        }
+        i++;
+        if(i == argc)
+        {
+            free(argv);
+        }
+    }
+}
+
+void QSpectemu::showScreen(QSpectemu::Screen scr)
+{
+    this->screen = scr;
+
+    if(scr == QSpectemu::ScreenProgRunning)
+    {
+        normalScreenWidget->hide();
+        fullScreenWidget->screen = scr;
+        fullScreenWidget->showInFullScreen();
+        qspectemu = fullScreenWidget;
+    }
+
+    bBinds->setVisible(scr == QSpectemu::ScreenProgMenu);
+    bKbd->setVisible(scr == QSpectemu::ScreenProgMenu);
+    bOk->setVisible(scr == QSpectemu::ScreenProgList || scr == QSpectemu::ScreenProgMenu);
+    bQuit->setVisible(scr == QSpectemu::ScreenProgList || scr == QSpectemu::ScreenProgMenu);
+    chkFullScreen->setVisible(scr == QSpectemu::ScreenProgMenu);
+    chkQvga->setVisible(scr == QSpectemu::ScreenProgMenu);
+    chkRotate->setVisible(scr == QSpectemu::ScreenProgMenu);
+    chkVirtKeyb->setVisible(scr == QSpectemu::ScreenProgMenu);
+    lw->setVisible(scr == QSpectemu::ScreenProgList);
+
+    qspectemu->update();
+}
+
+void QSpectemu::showScreenKeyboardPngBind()
+{
+    showScreen(QSpectemu::ScreenKeyboardPngBind);
+}
+
+void QSpectemu::showInFullScreen()
+{
+    showMaximized();
+    enterFullScreen();
+}
+
+void QSpectemu::enterFullScreen()
+{
+#ifdef QTOPIA
+    // Show editor view in full screen
+    setWindowFlags(windowFlags() | Qt::WindowStaysOnTopHint);
+    setWindowState(Qt::WindowFullScreen);
+    raise();
+#endif
+}
+
+bool QSpectemu::event(QEvent *event)
+{
+    if(this == fullScreenWidget)
+    {
+        if(event->type() == QEvent::WindowDeactivate)
+        {
+            lower();
+        }
+        else if(event->type() == QEvent::WindowActivate)
+        {
+            QString title = windowTitle();
+            setWindowTitle(QLatin1String("_allow_on_top_"));
+            raise();
+            setWindowTitle(title);
+        }
+    }
+    return QWidget::event(event);
+}
+
+void QSpectemu::setRes(int xy)
+{
+#ifdef QTOPIA
+    if(xy == 320240 || xy == 640480)
+    {
+        QFile f("/sys/bus/spi/devices/spi2.0/state");
+        f.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate);
+        if(xy == 320240)
+        {
+            QProcess p(this);
+            p.start("fbset", QStringList("qvga"));
+            p.waitForFinished(5000);
+            f.write("qvga-normal");
+        }
+        else if(xy == 640480)
+        {
+            QProcess p(this);
+            p.start("fbset", QStringList("vga"));
+            p.waitForFinished(5000);
+            f.write("normal");
+        }
+        f.close();
+    }
+#else
+    Q_UNUSED(xy);
+#endif
+}
+
+
+int QSpectemu::getKeyPng(int x, int y)
 {
     // Small screen - pressed bottom part of keyboard?
     if(kbpix.width() > width() && y > kbpix.height())
@@ -285,110 +407,92 @@ int RunScreen::getKeyPng(int x, int y)
     return -1;
 }
 
-void RunScreen::showScreen(Screen screen)
+void QSpectemu::paintEvent(QPaintEvent *)
 {
-    this->screen = screen;
-    update();
-}
-
-void RunScreen::showScreenKeyboardPngBind()
-{
-    showScreen(RunScreen::ScreenKeyboardPngBind);
-}
-
-bool RunScreen::event(QEvent *event)
-{
-    if(event->type() == QEvent::WindowDeactivate)
-    {
-        lower();
-    }
-    else if(event->type() == QEvent::WindowActivate)
-    {
-        QString title = windowTitle();
-        setWindowTitle(QLatin1String("_allow_on_top_"));
-        raise();
-        setWindowTitle(title);
-    }
-    return QWidget::event(event);
-}
-
-void RunScreen::paintEvent(QPaintEvent *)
-{
-    if(sp_image == 0)
-    {
-        return;
-    }
     QPainter p(this);
-    //p.rotate(90);
-    //p.scale(2, 2);
-    //p.setCompositionMode(QPainter::CompositionMode_Source);
-    if(screen == RunScreen::ScreenSpectrum ||
-       screen == RunScreen::ScreenSpectrumUnbinded)
+    switch(screen)
     {
-        if(rotated)
+        case QSpectemu::ScreenProgRunning:
         {
-            char *s = sp_image;
-            char *rStart = (char *)scrR.bits();
-            char *r = rStart;
-
-            for(int y = 0; y < TV_HEIGHT; y++)
+            if(sp_image == 0)
             {
-                r = rStart + y + (TV_WIDTH - 1) * TV_HEIGHT;
-                for(int x = 0; x < TV_WIDTH; x++)
+                return;
+            }
+            //p.setCompositionMode(QPainter::CompositionMode_Source);
+            if(rotated)
+            {
+                char *s = sp_image;
+                char *rStart = (char *)scrR.bits();
+                char *r = rStart;
+
+                for(int y = 0; y < TV_HEIGHT; y++)
                 {
-                    *r = *s;
-                    s++;
-                    r -= TV_HEIGHT;
+                    r = rStart + y + (TV_WIDTH - 1) * TV_HEIGHT;
+                    for(int x = 0; x < TV_WIDTH; x++)
+                    {
+                        *r = *s;
+                        s++;
+                        r -= TV_HEIGHT;
+                    }
+                }
+                p.drawImage(0, scrTop, scrR);
+            }
+            else
+            {
+                p.drawImage(0, scrTop, scr);
+            }
+        }
+        break;
+        case QSpectemu::ScreenKeyboardPng:
+        case QSpectemu::ScreenKeyboardPngBind:
+        {
+            {
+                p.drawPixmap(0, 0, kbpix);
+                if(kbpix.width() > width())
+                {
+                    p.drawPixmap(width() - kbpix.width(), kbpix.height(), kbpix);
                 }
             }
-            p.drawImage(0, scrTop, scrR);
         }
-        else
+        break;
+        case QSpectemu::ScreenBindings:
         {
-            p.drawImage(0, scrTop, scr);
-        }
-    }
-    else if(screen == RunScreen::ScreenKeyboardPng ||
-            screen == RunScreen::ScreenKeyboardPngBind)
-    {
-        p.drawPixmap(0, 0, kbpix);
-        if(kbpix.width() > width())
-        {
-            p.drawPixmap(width() - kbpix.width(), kbpix.height(), kbpix);
-        }
-    }
-    else if(screen == RunScreen::ScreenBindings)
-    {
-        for(int i = 0; i < OSKEYS_SIZE; i++)
-        {
-            oskey *ki = &(oskeys[i]);
-            if(ki->x <= 0)
+            for(int i = 0; i < OSKEYS_SIZE; i++)
             {
-                continue;
+                oskey *ki = &(oskeys[i]);
+                if(ki->x <= 0)
+                {
+                    continue;
+                }
+                QRect rect(ki->x - 16, ki->y - 16, 32, 32);
+                QString key(QChar(ki->key));
+                p.fillRect(rect, QColor(64, 64, 64, 64));
+                p.setPen(QColor(255, 255, 255, 255));
+                p.drawText(rect, key, QTextOption(Qt::AlignCenter));
             }
-            QRect rect(ki->x - 16, ki->y - 16, 32, 32);
-            QString key(QChar(ki->key));
-            p.fillRect(rect, QColor(64, 64, 64, 64));
-            p.setPen(QColor(255, 255, 255, 255));
-            p.drawText(rect, key, QTextOption(Qt::AlignCenter));
+            p.drawText(this->rect(), tr("Click screen to place key"), QTextOption(Qt::AlignCenter));
         }
-        p.drawText(this->rect(), tr("Click screen to place key"), QTextOption(Qt::AlignCenter));
+        break;
+        default:
+        {
+        }
+        break;
     }
 }
 
-void RunScreen::keyPressEvent(QKeyEvent *e)
+void QSpectemu::keyPressEvent(QKeyEvent *e)
 {
     pressKey(e->key());
 }
 
-void RunScreen::keyReleaseEvent(QKeyEvent *e)
+void QSpectemu::keyReleaseEvent(QKeyEvent *e)
 {
     releaseKey(e->key());
 }
 
-void RunScreen::mousePressEvent(QMouseEvent *e)
+void QSpectemu::mousePressEvent(QMouseEvent *e)
 {
-    if(screen == RunScreen::ScreenSpectrum)
+    if(screen == QSpectemu::ScreenProgRunning)
     {
         // Find nearest distance
         int x = e->x();
@@ -423,16 +527,7 @@ void RunScreen::mousePressEvent(QMouseEvent *e)
             }
         }
     }
-    else if(screen == RunScreen::ScreenSpectrumUnbinded)
-    {
-#ifdef QTOPIA
-        progMenu->showMaximized();
-#else
-        progMenu->showNormal();
-#endif
-        hide();
-    }
-    else if(screen == RunScreen::ScreenBindings)
+    else if(screen == QSpectemu::ScreenBindings)
     {
         int x = e->x();
         int y = e->y();
@@ -463,12 +558,12 @@ void RunScreen::mousePressEvent(QMouseEvent *e)
         update();
         QTimer::singleShot(500, this, SLOT(showScreenKeyboardPngBind()));
     }
-    else if(screen == RunScreen::ScreenKeyboardPng)
+    else if(screen == QSpectemu::ScreenKeyboardPng)
     {
         pressKey(getKeyPng(e->x(), e->y()));
-        showScreen(RunScreen::ScreenSpectrum);
+        showScreen(QSpectemu::ScreenSpectrum);
     }
-    else if(screen == RunScreen::ScreenKeyboardPngBind)
+    else if(screen == QSpectemu::ScreenKeyboardPngBind)
     {
         int key = getKeyPng(e->x(), e->y());
         for(int i = 0; i < OSKEYS_SIZE; i++)
@@ -480,26 +575,26 @@ void RunScreen::mousePressEvent(QMouseEvent *e)
                 break;
             }
         }
-        showScreen(RunScreen::ScreenBindings);
+        showScreen(QSpectemu::ScreenBindings);
         if(QMessageBox::question(this, "ZX Spectrum", tr("Bind next key?"),
                                  QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes)
         {
-            showScreen(RunScreen::ScreenBindings);
+            showScreen(QSpectemu::ScreenBindings);
         }
         else
         {
             qspectemu->saveCurrentProgCfg();
-            showScreen(RunScreen::ScreenSpectrum);
+            showScreen(QSpectemu::ScreenSpectrum);
         }
     }
 }
 
-void RunScreen::mouseReleaseEvent(QMouseEvent *e)
+void QSpectemu::mouseReleaseEvent(QMouseEvent *)
 {
     releaseAllKeys();
 }
 
-void RunScreen::mouseMoveEvent(QMouseEvent *e)
+void QSpectemu::mouseMoveEvent(QMouseEvent *e)
 {
     int x = e->x();
     int y = e->y();
@@ -540,104 +635,9 @@ void RunScreen::mouseMoveEvent(QMouseEvent *e)
         {
             continue;
         }
-        int dist = abs(x - ki->x) + abs(y - ki->y);
         if(ki->x == newPressedX && ki->y == newPressedY)
         {
             pressKey(ki->key);
-        }
-    }
-}
-
-ProgMenu::ProgMenu()
-{
-    bBinds = new QPushButton(tr("Bindings"), this);
-    connect(bBinds, SIGNAL(clicked()), this, SLOT(bindsClicked()));
-
-    bKbd = new QPushButton(tr("Keyboard"), this);
-    connect(bKbd, SIGNAL(clicked()), this, SLOT(kbdClicked()));
-
-    bQuit = new QPushButton(tr("Quit"), this);
-    connect(bQuit, SIGNAL(clicked()), this, SLOT(quitClicked()));
-
-    bContinue = new QPushButton(tr("Continue"), this);
-    connect(bContinue, SIGNAL(clicked()), this, SLOT(continueClicked()));
-
-    layout = new QVBoxLayout(this);
-    layout->addWidget(bBinds);
-    layout->addWidget(bKbd);
-    layout->addWidget(bQuit);
-    layout->addWidget(bContinue);
-
-    progMenu = this;
-}
-
-void ProgMenu::bindsClicked()
-{
-    hide();
-    runScr->showScreen(RunScreen::ScreenBindings);
-    runScr->showScreen();
-}
-
-void ProgMenu::kbdClicked()
-{
-}
-
-void ProgMenu::quitClicked()
-{
-}
-
-void ProgMenu::continueClicked()
-{
-    hide();
-    runScr->showScreen();
-}
-
-QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
-        : QWidget(parent)
-{
-#ifdef QTOPIA
-    this->setWindowState(Qt::WindowMaximized);
-    QtopiaApplication::setInputMethodHint(this, QtopiaApplication::AlwaysOn);
-#else
-    Q_UNUSED(f);
-#endif
-
-    lw = new QListWidget(this);
-
-    bOk = new QPushButton(tr("Run"), this);
-    connect(bOk, SIGNAL(clicked()), this, SLOT(okClicked()));
-
-    layout = new QVBoxLayout(this);
-    layout->addWidget(lw);
-    layout->addWidget(bOk);
-
-    runScr = new RunScreen();
-    progMenu = new ProgMenu();
-
-    //setAttribute(Qt::WA_NoSystemBackground);
-
-    argc = 0;
-    argv = 0;
-    rotated = false;
-    counter.start();
-    qspectemu = this;
-
-    loadCfg(NULL);
-    //    QTimer::singleShot(1, this, SLOT(startSpectemu()));
-}
-
-QSpectemu::~QSpectemu()
-{
-    for(int i = 0; i < argc; )
-    {
-        if(argv[i])
-        {
-            free(argv[i]);
-        }
-        i++;
-        if(i == argc)
-        {
-            free(argv);
         }
     }
 }
@@ -664,7 +664,7 @@ void QSpectemu::loadCfg(QString prog)
         {
             return;
         }
-        f.write("<qspectemu>\n  <prog file=\"program1.sna\" rotate=\"no\"></prog>\n</qspectemu>");
+        f.write("<qspectemu>\n  <prog file=\"program1.sna\" rotate=\"no\" fullscreen=\"no\" qvga=\"no\" virtKeyboard=\"no\"></prog>\n</qspectemu>");
         f.close();
     }
     if(!f.open(QIODevice::ReadOnly))
@@ -695,6 +695,19 @@ void QSpectemu::loadCfg(QString prog)
         // Read settings for matching program
         QString rotateAttr = progElem.attribute("rotate");
         rotated = (rotateAttr == "yes");
+        chkRotate->setChecked(rotated);
+
+        QString fullscreenAttr = progElem.attribute("fullscreen");
+        fullScreen = (fullscreenAttr == "yes");
+        chkFullScreen->setChecked(fullScreen);
+
+        QString qvgaAttr = progElem.attribute("qvga");
+        qvga = (qvgaAttr == "yes");
+        chkQvga->setChecked(qvga);
+
+        QString vkAttr = progElem.attribute("virtKeyboard");
+        virtKeyb = (vkAttr == "yes");
+        chkVirtKeyb->setChecked(virtKeyb);
 
         QDomElement bindsElem = progElem.firstChildElement("binds");
         if(bindsElem.isNull())
@@ -792,35 +805,51 @@ void QSpectemu::saveCurrentProgCfg()
     saveCfg(currentProg);
 }
 
+void QSpectemu::bindsClicked()
+{
+}
+
+void QSpectemu::kbdClicked()
+{
+}
+
+void QSpectemu::quitClicked()
+{
+}
+
 void QSpectemu::okClicked()
 {
-    hide();
-    runScr->showScreen();
-
-    QStringList args = QApplication::arguments();
-    argc = args.count();
-    argv = (char **) malloc_err(sizeof(char *) * argc);
-    for(int i = 0; i < argc; i++)
+    if(screen == QSpectemu::ScreenProgList)
     {
-        argv[i] = strdup((char *) args.at(i).toLocal8Bit().constData());
+        QListWidgetItem *sel = lw->currentItem();
+        if(sel == NULL)
+        {
+            return;
+        }
+        currentProg = sel->text();
+        loadCfg(currentProg);
+        showScreen(QSpectemu::ScreenProgMenu);
     }
-
-    spma_init_privileged();
-    spcf_pre_check_options(argc, argv);
-    check_params(argc, argv);
-    sp_init();
-
-    QListWidgetItem *sel = lw->currentItem();
-    if(sel == NULL)
+    else if(screen == QSpectemu::ScreenProgMenu)
     {
-        return;
+        QStringList args = QApplication::arguments();
+        argc = args.count();
+        argv = (char **) malloc_err(sizeof(char *) * argc);
+        for(int i = 0; i < argc; i++)
+        {
+            argv[i] = strdup((char *) args.at(i).toLocal8Bit().constData());
+        }
+
+        spma_init_privileged();
+        spcf_pre_check_options(argc, argv);
+        check_params(argc, argv);
+        sp_init();
+
+        load_snapshot_file_type(currentProg.toLatin1().data(), -1);
+
+        showScreen(QSpectemu::ScreenProgRunning);
+        start_spectemu();
     }
-    currentProg = sel->text();
-    loadCfg(currentProg);
-
-    load_snapshot_file_type(currentProg.toLatin1().data(), -1);
-
-    start_spectemu();
 }
 
 #ifdef	__cplusplus
@@ -869,7 +898,7 @@ void spkey_screenmode(void)
 {
 }
 
-void spkb_process_events(int evenframe)
+void spkb_process_events(int)
 {
     QApplication::processEvents();
 }
@@ -905,43 +934,20 @@ void update_screen(void)
 
     if(rotated)
     {
-        runScr->update(top + scrTop, 0, scrTop + bottom + 1, TV_WIDTH);
+        qspectemu->update(top + scrTop, 0, scrTop + bottom + 1, TV_WIDTH);
     }
     else
     {
-        runScr->update(0, top + scrTop, TV_WIDTH, scrTop + bottom + 1);
+        qspectemu->update(0, top + scrTop, TV_WIDTH, scrTop + bottom + 1);
     }
-    //runScr->update();
-
-    //    int top = -1;
-    //    int lastMark = 0;
-    //    QRegion r;
-    //    for(int i = 0; i < HEIGHT; i++)
-    //    {
-    //        int mark = sp_imag_mark[i];
-    //        sp_imag_mark[i] = 0;
-    //        if(mark == lastMark)
-    //        {
-    //            continue;
-    //        }
-    //        lastMark = mark;
-    //        if(mark)
-    //        {
-    //            top = i;
-    //        }
-    //        else
-    //        {
-    //            r = r.united(QRect(0, top + scrTop, TV_WIDTH, scrTop + i + 1));
-    //        }
-    //    }
-    //    runScr->update(r);
+    //qspectemu->update();
 }
 
 void destroy_spect_scr(void)
 {
 }
 
-void resize_spect_scr(int s)
+void resize_spect_scr(int)
 {
 }
 

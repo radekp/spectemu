@@ -10,6 +10,7 @@
 #include <QImage>
 #include <QVBoxLayout>
 #include <QPushButton>
+#include <QCheckBox>
 #include <QListWidget>
 #include <QListWidgetItem>
 #include <QProcess>
@@ -35,13 +36,16 @@
 #define WIDTH      256
 #define HEIGHT     192
 
-class RunScreen : public QWidget
+class QSpectemu : public QWidget
 {
     Q_OBJECT
 
 public:
     enum Screen
     {
+        ScreenProgList,             // list of available programs
+        ScreenProgMenu,             // menu for slected program options
+        ScreenProgRunning,          // program is running
         ScreenSpectrumUnbinded,     // running spectrum, no keys binded
         ScreenSpectrum,             // running spectrum
         ScreenKeyboardPng,          // big on screen keyboard
@@ -49,10 +53,43 @@ public:
         ScreenBindings,             // showing how keys are binded and allow edit/add keys
     };
 
-    RunScreen();
-    void showScreen();
-    void showScreen(Screen screen);
+    QSpectemu(QWidget *parent = 0, Qt::WFlags f = 0);
+    ~QSpectemu();
+
+    void showScreen(QSpectemu::Screen);
     void setRes(int xy);
+
+private:
+    int argc;
+    char **argv;
+    QString currentProg;
+    Screen screen;
+    QPixmap kbpix;
+    int pressedKeyX;                // x and y of pressed on screen key
+    int pressedKeyY;
+    QListWidget *lw;
+    QPushButton *bOk;
+    QVBoxLayout *layout;
+    QPushButton *bBinds;
+    QPushButton *bKbd;
+    QPushButton *bQuit;
+    QCheckBox *chkQvga;
+    QCheckBox *chkRotate;
+    QCheckBox *chkFullScreen;
+    QCheckBox *chkVirtKeyb;
+    int getKeyPng(int x, int y);
+    void loadCfg(QString prog);
+    void saveCfg(QString prog);
+    void fillLw();
+    void saveCurrentProgCfg();
+    void showInFullScreen();
+
+private slots:
+    void okClicked();
+    void bindsClicked();
+    void kbdClicked();
+    void quitClicked();
+    void showScreenKeyboardPngBind();
 
 protected:
     bool event(QEvent *);
@@ -63,61 +100,6 @@ protected:
     void mousePressEvent(QMouseEvent *);
     void mouseReleaseEvent(QMouseEvent *);
     void mouseMoveEvent(QMouseEvent *);
-
-private:
-    Screen screen;
-    QPixmap kbpix;
-    int pressedKeyX;                // x and y of pressed on screen key
-    int pressedKeyY;
-    int getKeyPng(int x, int y);
-
-public slots:
-    void showScreenKeyboardPngBind();
-};
-
-class ProgMenu : public QWidget
-{
-    Q_OBJECT
-
-public:
-    ProgMenu();
-
-private:
-    QPushButton *bBinds;
-    QPushButton *bKbd;
-    QPushButton *bQuit;
-    QPushButton *bContinue;
-    QVBoxLayout *layout;
-
-private slots:
-    void bindsClicked();
-    void kbdClicked();
-    void quitClicked();
-    void continueClicked();
-};
-
-class QSpectemu : public QWidget
-{
-    Q_OBJECT
-
-public:
-    QSpectemu(QWidget *parent = 0, Qt::WFlags f = 0);
-    ~QSpectemu();
-    void saveCurrentProgCfg();
-
-private:
-    int argc;
-    char **argv;
-    QListWidget *lw;
-    QPushButton *bOk;
-    QVBoxLayout *layout;
-    QString currentProg;
-    void loadCfg(QString prog);
-    void saveCfg(QString prog);
-    void fillLw();
-
-private slots:
-    void okClicked();
 
 };
 
