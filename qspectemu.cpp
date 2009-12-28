@@ -81,6 +81,8 @@ static struct oskey oskeyspng[] = {
     {Qt::Key_M, 452, 272},
     {Qt::Key_Control, 507, 272},
     {Qt::Key_Space, 578, 272},
+    {Qt::Key_F1, 250, 28},
+    {Qt::Key_F2, 330, 28},
 };
 
 #define OSKEYS_SIZE (int)(sizeof(oskeys) / sizeof(oskey))
@@ -133,7 +135,7 @@ bool decodeKey(int key, int *ks, int *shks, int *ki)
     case Qt::Key_Apostrophe:*ks = '\'';         *shks = '"';        break;
     case Qt::Key_QuoteLeft: *ks = '`';          *shks = '~';        break;
     case Qt::Key_Shift:     *ks = SK_Shift_L;                       break;
-    case Qt::Key_Backslash: *ks = '\\';          *shks = '|';       break;
+    case Qt::Key_Backslash: *ks = '\\';         *shks = '|';        break;
     case Qt::Key_Z:         *ks = 'z';          *shks = 'Z';        break;
     case Qt::Key_X:         *ks = 'x';          *shks = 'X';        break;
     case Qt::Key_C:         *ks = 'c';          *shks = 'C';        break;
@@ -145,6 +147,8 @@ bool decodeKey(int key, int *ks, int *shks, int *ki)
     case Qt::Key_Period:    *ks = '.';          *shks = '>';        break;
     case Qt::Key_Slash:     *ks = '/';          *shks = '?';        break;
     case Qt::Key_Space:     *ks = ' ';          *shks = ' ';        break;
+    case Qt::Key_F1:        *ks = -1;                               break;
+    case Qt::Key_F2:        *ks = -2;                               break;
     default:
         return false;
     }
@@ -162,6 +166,21 @@ static void pressKey(int key)
     if(!decodeKey(key, &ks, &shks, &ki))
     {
         printf("unknown key=%d\n", key);
+        return;
+    }
+
+    // Special keys
+    if(ks < 0)
+    {
+        sp_paused = 1;
+        if(key == Qt::Key_F1)
+        {
+            qspectemu->showScreen(QSpectemu::ScreenKeyboardPng);
+        }
+        else if(key == Qt::Key_F2)
+        {
+            qspectemu->showScreen(QSpectemu::ScreenProgMenu);
+        }
         return;
     }
 
@@ -217,6 +236,8 @@ QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
 {
 #ifdef QTOPIA
     this->setWindowState(Qt::WindowMaximized);
+#else
+    resize(640, 480);
 #endif
     Q_UNUSED(f);
 
@@ -294,6 +315,7 @@ void QSpectemu::showScreen(QSpectemu::Screen scr)
     if(this == fullScreenWidget)
     {
         normalScreenWidget->showScreen(scr);
+        update();
         return;
     }
 
@@ -370,6 +392,8 @@ void QSpectemu::showScreen(QSpectemu::Screen scr)
     chkRotate->setVisible(scr == QSpectemu::ScreenProgMenu);
     chkVirtKeyb->setVisible(scr == QSpectemu::ScreenProgMenu);
     lw->setVisible(scr == QSpectemu::ScreenProgList);
+
+    update();
 }
 
 void QSpectemu::showScreenKeyboardPngBind()
@@ -621,6 +645,7 @@ void QSpectemu::mousePressEvent(QMouseEvent *e)
     }
     else if(screen == QSpectemu::ScreenKeyboardPng)
     {
+        sp_paused = 0;
         pressKey(getKeyPng(e->x(), e->y()));
         showScreen(QSpectemu::ScreenProgRunning);
     }
@@ -866,6 +891,7 @@ void QSpectemu::bindClicked()
 
 void QSpectemu::kbdClicked()
 {
+    showScreen(QSpectemu::ScreenKeyboardPng);
 }
 
 void QSpectemu::quitClicked()
@@ -896,6 +922,13 @@ void QSpectemu::okClicked()
     }
     else if(screen == QSpectemu::ScreenProgMenu)
     {
+        if(sp_paused)
+        {
+            sp_paused = 0;
+            showScreen(QSpectemu::ScreenProgRunning);
+            return;
+        }
+
         QStringList args = QApplication::arguments();
         argc = args.count();
         argv = (char **) malloc_err(sizeof(char *) * argc);
