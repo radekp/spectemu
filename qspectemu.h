@@ -31,10 +31,13 @@
 #include "snapshot.h"
 
 #define TV_WIDTH   320
-#define TV_HEIGHT  192
+#define TV_HEIGHT  240
 
 #define WIDTH      256
 #define HEIGHT     192
+
+#define X_OFF ((TV_WIDTH - WIDTH) / 2)
+#define Y_OFF ((TV_HEIGHT - HEIGHT) / 2)
 
 class QSpectemu : public QWidget
 {

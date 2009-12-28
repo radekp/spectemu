@@ -6,7 +6,6 @@ QSpectemu *fullScreenWidget = NULL;     // fullscreen instance (needed for Qtopi
 QSpectemu *normalScreenWidget = NULL;   // non-fullscreen instance
 QImage scr;                             // bitmap with speccy screen
 QImage scrR;                            // bitmap for rotated speccy screen
-int scrTop;                             // used in qvga mode
 bool rotated;                           // true for display rotated
 bool fullScreen;                        // true to play in fullscreen
 bool qvga;                              // true to display in qvga (320x240)
@@ -258,7 +257,6 @@ QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
     layout->addWidget(bQuit);
     layout->addWidget(bOk);
 
-    scrTop = 0;
     kbpix.load(":/qspectkey.png");
 
     //setAttribute(Qt::WA_NoSystemBackground);
@@ -347,9 +345,9 @@ void QSpectemu::showScreen(QSpectemu::Screen scr)
         }
     }
 
-#if QTOPIA
     if(scr == ScreenProgRunning)
     {
+#if QTOPIA
         if(virtKeyb)
         {
             QtopiaApplication::setInputMethodHint(qspectemu, QtopiaApplication::AlwaysOn);
@@ -358,8 +356,8 @@ void QSpectemu::showScreen(QSpectemu::Screen scr)
         {
             QtopiaApplication::setInputMethodHint(qspectemu, QtopiaApplication::AlwaysOff);
         }
-    }
 #endif
+    }
 
     this->screen = scr;
     
@@ -500,21 +498,21 @@ void QSpectemu::paintEvent(QPaintEvent *)
                         r -= TV_HEIGHT;
                     }
                 }
-                p.drawImage(0, scrTop, scrR);
+                p.drawImage(0, 0, scrR);
             }
             else
             {
-                p.drawImage(0, scrTop, scr);
+                p.drawImage(0, 0, scr);
             }
         }
         break;
         case QSpectemu::ScreenKeyboardPng:
         case QSpectemu::ScreenKeyboardPngBind:
         {
-            p.drawPixmap(0, scrTop, kbpix);
+            p.drawPixmap(0, 0, kbpix);
             if(kbpix.width() > width())
             {
-                p.drawPixmap(width() - kbpix.width(), scrTop + kbpix.height(), kbpix);
+                p.drawPixmap(width() - kbpix.width(), kbpix.height(), kbpix);
             }
         }
         break;
@@ -984,6 +982,13 @@ int display_keyboard(void)
 
 void update_screen(void)
 {
+    if(sp_border_update)
+    {
+        memset(sp_imag_mark, 0, HEIGHT);
+        qspectemu->update();
+        return;
+    }
+
     int top = -1;
     int bottom = 0;
     for(int i = 0; i < HEIGHT; i++)
@@ -999,16 +1004,17 @@ void update_screen(void)
 	bottom = i;
 	sp_imag_mark[i] = 0;
     }
+    top += Y_OFF;
+    bottom += Y_OFF;
 
     if(rotated)
     {
-        qspectemu->update(top + scrTop, 0, scrTop + bottom + 1, TV_WIDTH);
+        qspectemu->update(top, X_OFF, bottom + 1, WIDTH);
     }
     else
     {
-        qspectemu->update(0, top + scrTop, TV_WIDTH, scrTop + bottom + 1);
+        qspectemu->update(X_OFF, top, WIDTH, bottom + 1);
     }
-    //qspectemu->update();
 }
 
 void destroy_spect_scr(void)
