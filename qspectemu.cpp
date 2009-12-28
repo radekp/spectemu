@@ -11,6 +11,7 @@ bool fullScreen;                        // true to play in fullscreen
 bool qvga;                              // true to display in qvga (320x240)
 bool virtKeyb;                          // true to display virtual keyboard
 QTime counter;
+extern int endofsingle;
 
 // On screen key info
 struct oskey {
@@ -21,7 +22,7 @@ struct oskey {
 
 // User defined on screen keys
 static struct oskey oskeys[] = {
-    {0, 0, 0},
+    {Qt::Key_F2, 0x3fffffff, 0x3fffffff},
     {0, 0, 0},
     {0, 0, 0},
     {0, 0, 0},
@@ -256,6 +257,9 @@ QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
     bBind = new QPushButton(tr("Bind key"), this);
     connect(bBind, SIGNAL(clicked()), this, SLOT(bindClicked()));
 
+    bSnap = new QPushButton(tr("Save snapshot"), this);
+    connect(bSnap, SIGNAL(clicked()), this, SLOT(snapClicked()));
+
     bKbd = new QPushButton(tr("Keyboard"), this);
     connect(bKbd, SIGNAL(clicked()), this, SLOT(kbdClicked()));
 
@@ -274,6 +278,7 @@ QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
     layout->addWidget(chkQvga);
     layout->addWidget(chkVirtKeyb);
     layout->addWidget(bBind);
+    layout->addWidget(bSnap);
     layout->addWidget(bKbd);
     layout->addWidget(bQuit);
     layout->addWidget(bOk);
@@ -383,15 +388,16 @@ void QSpectemu::showScreen(QSpectemu::Screen scr)
 
     this->screen = scr;
     
-    bBind->setVisible(scr == QSpectemu::ScreenProgMenu);
-    bKbd->setVisible(scr == QSpectemu::ScreenProgMenu);
-    bOk->setVisible(scr == QSpectemu::ScreenProgList || scr == QSpectemu::ScreenProgMenu);
-    bQuit->setVisible(scr == QSpectemu::ScreenProgList || scr == QSpectemu::ScreenProgMenu);
-    chkFullScreen->setVisible(scr == QSpectemu::ScreenProgMenu);
-    chkQvga->setVisible(scr == QSpectemu::ScreenProgMenu);
-    chkRotate->setVisible(scr == QSpectemu::ScreenProgMenu);
-    chkVirtKeyb->setVisible(scr == QSpectemu::ScreenProgMenu);
-    lw->setVisible(scr == QSpectemu::ScreenProgList);
+    bBind->setVisible(scr == ScreenProgMenu);
+    bKbd->setVisible(scr == ScreenProgMenu);
+    bSnap->setVisible(scr == ScreenProgMenu);
+    bOk->setVisible(scr == ScreenProgList || scr == ScreenProgMenu);
+    bQuit->setVisible(scr == ScreenProgList || scr == ScreenProgMenu);
+    chkFullScreen->setVisible(scr == ScreenProgMenu);
+    chkQvga->setVisible(scr == ScreenProgMenu);
+    chkRotate->setVisible(scr == ScreenProgMenu);
+    chkVirtKeyb->setVisible(scr == ScreenProgMenu);
+    lw->setVisible(scr == ScreenProgList);
 
     update();
 }
@@ -582,7 +588,7 @@ void QSpectemu::mousePressEvent(QMouseEvent *e)
         // Find nearest distance
         int x = e->x();
         int y = e->y();
-        int minDist = 0xffff;
+        int minDist = 0x7fffffff;
         for(int i = 0; i < OSKEYS_SIZE; i++)
         {
             oskey *ki = &(oskeys[i]);
@@ -598,7 +604,6 @@ void QSpectemu::mousePressEvent(QMouseEvent *e)
                 pressedKeyY = ki->y;
             }
         }
-        // Press all keys in this distance
         for(int i = 0; i < OSKEYS_SIZE; i++)
         {
             oskey *ki = &(oskeys[i]);
@@ -676,7 +681,7 @@ void QSpectemu::mouseMoveEvent(QMouseEvent *e)
     int y = e->y();
 
     // Check if we moved to another key
-    int minDist = 0xffff;
+    int minDist = 0x7fffffff;
     int newPressedX = 0;
     int newPressedY = 0;
     for(int i = 0; i < OSKEYS_SIZE; i++)
@@ -828,45 +833,53 @@ void QSpectemu::saveCfg(QString prog)
     }
 
     QDomElement root = doc.documentElement();
-    for(QDomElement progElem = root.firstChildElement("prog"); !progElem.isNull(); progElem = progElem.nextSiblingElement("prog"))
+    QDomElement progElem;
+    for(progElem = root.firstChildElement("prog"); !progElem.isNull(); progElem = progElem.nextSiblingElement("prog"))
     {
         QString file = progElem.attribute("file");
-        if(file != prog)
+        if(file == prog)
         {
-            continue;
+            break;
         }
+    }
 
-        // Save settings for current program
-        progElem.setAttribute("rotate", rotated ? "yes" : "no");
-        progElem.setAttribute("fullscreen", fullScreen ? "yes" : "no");
-        progElem.setAttribute("qvga", qvga ? "yes" : "no");
-        progElem.setAttribute("virtkeyboard", virtKeyb ? "yes" : "no");
+    if(progElem.isNull())
+    {
+        progElem = doc.createElement("prog");
+        progElem.setAttribute("file", prog);
+        root.appendChild(progElem);
+    }
 
-        QDomElement bindsElem = progElem.firstChildElement("binds");
-        if(bindsElem.isNull())
+    // Save settings for current program
+    progElem.setAttribute("rotate", rotated ? "yes" : "no");
+    progElem.setAttribute("fullscreen", fullScreen ? "yes" : "no");
+    progElem.setAttribute("qvga", qvga ? "yes" : "no");
+    progElem.setAttribute("virtkeyboard", virtKeyb ? "yes" : "no");
+
+    QDomElement bindsElem = progElem.firstChildElement("binds");
+    if(bindsElem.isNull())
+    {
+        bindsElem = doc.createElement("binds");
+        progElem.appendChild(bindsElem);
+    }
+
+    QDomNodeList binds = bindsElem.childNodes();
+    while(binds.length() > 0)
+    {
+        bindsElem.removeChild(binds.at(0));
+    }
+    for(int j = 0; j < OSKEYS_SIZE; j++)
+    {
+        oskey *k = &(oskeys[j]);
+        if(k->key <= 0)
         {
-            bindsElem = doc.createElement("binds");
-            progElem.appendChild(bindsElem);
+            break;
         }
-        
-        QDomNodeList binds = bindsElem.childNodes();
-        while(binds.length() > 0)
-        {
-            bindsElem.removeChild(binds.at(0));
-        }
-        for(int j = 0; j < OSKEYS_SIZE; j++)
-        {
-            oskey *k = &(oskeys[j]);
-            if(k->key <= 0)
-            {
-                break;
-            }
-            QDomElement bind = doc.createElement("bind");
-            bind.setAttribute("key", QString::number(k->key));
-            bind.setAttribute("x", QString::number(k->x));
-            bind.setAttribute("y", QString::number(k->y));
-            bindsElem.appendChild(bind);
-        }
+        QDomElement bind = doc.createElement("bind");
+        bind.setAttribute("key", QString::number(k->key));
+        bind.setAttribute("x", QString::number(k->x));
+        bind.setAttribute("y", QString::number(k->y));
+        bindsElem.appendChild(bind);
     }
 
     if(!f.open(QIODevice::WriteOnly))
@@ -894,10 +907,43 @@ void QSpectemu::kbdClicked()
     showScreen(QSpectemu::ScreenKeyboardPng);
 }
 
+void QSpectemu::snapClicked()
+{
+    if(currentProg.length() <= 5)
+    {
+        showErr(this, tr("Invalid filename"));
+        return;
+    }
+    QString ext = currentProg.right(4);
+    int nameEnd = currentProg.length() - 5;
+    int num = 0;
+    int exp = 1;
+    while(nameEnd >= 0 && currentProg.at(nameEnd).isDigit())
+    {
+        num += exp * currentProg.at(nameEnd).digitValue();
+        exp *= 10;
+        nameEnd--;
+    }
+    QString name = currentProg.left(nameEnd + 1);
+
+    do
+    {
+        num++;
+        currentProg = name + QString::number(num) + ext;
+    }
+    while(QFile::exists(currentProg));
+
+    save_snapshot_file(currentProg.toAscii().data());
+    saveCurrentProgCfg();
+    loadCfg(NULL);
+}
+
 void QSpectemu::quitClicked()
 {
     if(screen == QSpectemu::ScreenProgMenu)
     {
+        sp_paused = 0;
+        endofsingle = 1;
         showScreen(QSpectemu::ScreenProgList);
         saveCurrentProgCfg();
     }
@@ -942,7 +988,10 @@ void QSpectemu::okClicked()
         check_params(argc, argv);
         sp_init();
 
-        load_snapshot_file_type(currentProg.toLatin1().data(), -1);
+        if(QFile::exists(currentProg))
+        {
+            load_snapshot_file_type(currentProg.toLatin1().data(), -1);
+        }
 
         showScreen(QSpectemu::ScreenProgRunning);
         saveCurrentProgCfg();

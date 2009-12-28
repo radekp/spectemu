@@ -74,6 +74,7 @@ private:
     QPushButton *bBind;
     QPushButton *bKbd;
     QPushButton *bQuit;
+    QPushButton *bSnap;
     QCheckBox *chkQvga;
     QCheckBox *chkRotate;
     QCheckBox *chkFullScreen;
@@ -81,7 +82,6 @@ private:
     int getKeyPng(int x, int y);
     void loadCfg(QString prog);
     void saveCfg(QString prog);
-    void fillLw();
     void saveCurrentProgCfg();
     void showInFullScreen();
 
@@ -89,6 +89,7 @@ private slots:
     void okClicked();
     void bindClicked();
     void kbdClicked();
+    void snapClicked();
     void quitClicked();
     void showScreenKeyboardPngBind();
 
