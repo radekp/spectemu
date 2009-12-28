@@ -10,6 +10,7 @@
 #include <QImage>
 #include <QVBoxLayout>
 #include <QPushButton>
+#include <QLabel>
 #include <QCheckBox>
 #include <QListWidget>
 #include <QListWidgetItem>
@@ -71,14 +72,15 @@ private:
     QListWidget *lw;
     QPushButton *bOk;
     QPushButton *bBack;
-    QVBoxLayout *layout;
     QPushButton *bBind;
     QPushButton *bKbd;
     QPushButton *bSnap;
+    QLabel *lProg;
     QCheckBox *chkQvga;
     QCheckBox *chkRotate;
     QCheckBox *chkFullScreen;
     QCheckBox *chkVirtKeyb;
+    QVBoxLayout *layout;
     int getKeyPng(int x, int y);
     void loadCfg(QString prog);
     void saveCfg(QString prog);

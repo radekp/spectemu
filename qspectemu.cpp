@@ -251,8 +251,17 @@ QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
 
     lw = new QListWidget(this);
 
+    lProg = new QLabel(this);
+    lProg->setAlignment(Qt::AlignCenter);
+    QFont font = lProg->font();
+    font.setBold(true);
+    lProg->setFont(font);
+
     bOk = new QPushButton(tr(">"), this);
     connect(bOk, SIGNAL(clicked()), this, SLOT(okClicked()));
+
+    bBack = new QPushButton(tr("<"), this);
+    connect(bBack, SIGNAL(clicked()), this, SLOT(backClicked()));
 
     bBind = new QPushButton(tr("Bind key"), this);
     connect(bBind, SIGNAL(clicked()), this, SLOT(bindClicked()));
@@ -263,9 +272,6 @@ QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
     bKbd = new QPushButton(tr("Keyboard"), this);
     connect(bKbd, SIGNAL(clicked()), this, SLOT(kbdClicked()));
 
-    bBack = new QPushButton(tr("Back"), this);
-    connect(bBack, SIGNAL(clicked()), this, SLOT(backClicked()));
-
     chkFullScreen = new QCheckBox(tr("Fullscreen"), this);
     chkRotate = new QCheckBox(tr("Rotate"), this);
     chkQvga = new QCheckBox(tr("Qvga (320x240)"), this);
@@ -273,6 +279,7 @@ QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
 
     layout = new QVBoxLayout(this);
     layout->addWidget(lw);
+    layout->addWidget(lProg);
     layout->addWidget(chkFullScreen);
     layout->addWidget(chkRotate);
     layout->addWidget(chkQvga);
@@ -385,12 +392,10 @@ void QSpectemu::showScreen(QSpectemu::Screen scr)
         }
 #endif
     }
-
-    this->screen = scr;
     
     bBind->setVisible(scr == ScreenProgMenu);
-    bKbd->setVisible(scr == ScreenProgMenu);
-    bSnap->setVisible(scr == ScreenProgMenu);
+    bKbd->setVisible(scr == ScreenProgMenu && screen == ScreenProgRunning);
+    bSnap->setVisible(scr == ScreenProgMenu && screen == ScreenProgRunning);
     bOk->setVisible(scr == ScreenProgList || scr == ScreenProgMenu);
     bBack->setVisible(scr == ScreenProgList || scr == ScreenProgMenu);
     chkFullScreen->setVisible(scr == ScreenProgMenu);
@@ -398,7 +403,10 @@ void QSpectemu::showScreen(QSpectemu::Screen scr)
     chkRotate->setVisible(scr == ScreenProgMenu);
     chkVirtKeyb->setVisible(scr == ScreenProgMenu);
     lw->setVisible(scr == ScreenProgList);
+    lProg->setVisible(scr == ScreenProgMenu);
+    lProg->setText(currentProg);
 
+    this->screen = scr;
     update();
 }
 
@@ -998,6 +1006,7 @@ void QSpectemu::snapClicked()
     save_snapshot_file(currentProg.toAscii().data());
     saveCurrentProgCfg();
     loadCfg(NULL);
+    showScreen(ScreenProgMenu);
 }
 
 #ifdef	__cplusplus
