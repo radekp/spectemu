@@ -70,10 +70,10 @@ private:
     int pressedKeyY;
     QListWidget *lw;
     QPushButton *bOk;
+    QPushButton *bBack;
     QVBoxLayout *layout;
     QPushButton *bBind;
     QPushButton *bKbd;
-    QPushButton *bQuit;
     QPushButton *bSnap;
     QCheckBox *chkQvga;
     QCheckBox *chkRotate;
@@ -87,10 +87,10 @@ private:
 
 private slots:
     void okClicked();
+    void backClicked();
     void bindClicked();
     void kbdClicked();
     void snapClicked();
-    void quitClicked();
     void showScreenKeyboardPngBind();
 
 protected:

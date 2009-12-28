@@ -263,8 +263,8 @@ QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
     bKbd = new QPushButton(tr("Keyboard"), this);
     connect(bKbd, SIGNAL(clicked()), this, SLOT(kbdClicked()));
 
-    bQuit = new QPushButton(tr("Quit"), this);
-    connect(bQuit, SIGNAL(clicked()), this, SLOT(quitClicked()));
+    bBack = new QPushButton(tr("Back"), this);
+    connect(bBack, SIGNAL(clicked()), this, SLOT(backClicked()));
 
     chkFullScreen = new QCheckBox(tr("Fullscreen"), this);
     chkRotate = new QCheckBox(tr("Rotate"), this);
@@ -280,7 +280,7 @@ QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
     layout->addWidget(bBind);
     layout->addWidget(bSnap);
     layout->addWidget(bKbd);
-    layout->addWidget(bQuit);
+    layout->addWidget(bBack);
     layout->addWidget(bOk);
 
     kbpix.load(":/qspectkey.png");
@@ -392,7 +392,7 @@ void QSpectemu::showScreen(QSpectemu::Screen scr)
     bKbd->setVisible(scr == ScreenProgMenu);
     bSnap->setVisible(scr == ScreenProgMenu);
     bOk->setVisible(scr == ScreenProgList || scr == ScreenProgMenu);
-    bQuit->setVisible(scr == ScreenProgList || scr == ScreenProgMenu);
+    bBack->setVisible(scr == ScreenProgList || scr == ScreenProgMenu);
     chkFullScreen->setVisible(scr == ScreenProgMenu);
     chkQvga->setVisible(scr == ScreenProgMenu);
     chkRotate->setVisible(scr == ScreenProgMenu);
@@ -897,62 +897,6 @@ void QSpectemu::saveCurrentProgCfg()
     saveCfg(currentProg);
 }
 
-void QSpectemu::bindClicked()
-{
-    showScreen(QSpectemu::ScreenBindings);
-}
-
-void QSpectemu::kbdClicked()
-{
-    showScreen(QSpectemu::ScreenKeyboardPng);
-}
-
-void QSpectemu::snapClicked()
-{
-    if(currentProg.length() <= 5)
-    {
-        showErr(this, tr("Invalid filename"));
-        return;
-    }
-    QString ext = currentProg.right(4);
-    int nameEnd = currentProg.length() - 5;
-    int num = 0;
-    int exp = 1;
-    while(nameEnd >= 0 && currentProg.at(nameEnd).isDigit())
-    {
-        num += exp * currentProg.at(nameEnd).digitValue();
-        exp *= 10;
-        nameEnd--;
-    }
-    QString name = currentProg.left(nameEnd + 1);
-
-    do
-    {
-        num++;
-        currentProg = name + QString::number(num) + ext;
-    }
-    while(QFile::exists(currentProg));
-
-    save_snapshot_file(currentProg.toAscii().data());
-    saveCurrentProgCfg();
-    loadCfg(NULL);
-}
-
-void QSpectemu::quitClicked()
-{
-    if(screen == QSpectemu::ScreenProgMenu)
-    {
-        sp_paused = 0;
-        endofsingle = 1;
-        showScreen(QSpectemu::ScreenProgList);
-        saveCurrentProgCfg();
-    }
-    else if(screen == QSpectemu::ScreenProgList)
-    {
-        close();
-    }
-}
-
 void QSpectemu::okClicked()
 {
     if(screen == QSpectemu::ScreenProgList)
@@ -998,6 +942,62 @@ void QSpectemu::okClicked()
 
         start_spectemu();
     }
+}
+
+void QSpectemu::backClicked()
+{
+    if(screen == QSpectemu::ScreenProgMenu)
+    {
+        sp_paused = 0;
+        endofsingle = 1;
+        showScreen(QSpectemu::ScreenProgList);
+        saveCurrentProgCfg();
+    }
+    else if(screen == QSpectemu::ScreenProgList)
+    {
+        close();
+    }
+}
+
+void QSpectemu::bindClicked()
+{
+    showScreen(QSpectemu::ScreenBindings);
+}
+
+void QSpectemu::kbdClicked()
+{
+    showScreen(QSpectemu::ScreenKeyboardPng);
+}
+
+void QSpectemu::snapClicked()
+{
+    if(currentProg.length() <= 5)
+    {
+        showErr(this, tr("Invalid filename"));
+        return;
+    }
+    QString ext = currentProg.right(4);
+    int nameEnd = currentProg.length() - 5;
+    int num = 0;
+    int exp = 1;
+    while(nameEnd >= 0 && currentProg.at(nameEnd).isDigit())
+    {
+        num += exp * currentProg.at(nameEnd).digitValue();
+        exp *= 10;
+        nameEnd--;
+    }
+    QString name = currentProg.left(nameEnd + 1);
+
+    do
+    {
+        num++;
+        currentProg = name + QString::number(num) + ext;
+    }
+    while(QFile::exists(currentProg));
+
+    save_snapshot_file(currentProg.toAscii().data());
+    saveCurrentProgCfg();
+    loadCfg(NULL);
 }
 
 #ifdef	__cplusplus
