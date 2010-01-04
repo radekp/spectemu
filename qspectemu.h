@@ -8,7 +8,7 @@
 #include <QPainter>
 #include <QApplication>
 #include <QImage>
-#include <QVBoxLayout>
+#include <QGridLayout>
 #include <QPushButton>
 #include <QLabel>
 #include <QCheckBox>
@@ -80,7 +80,7 @@ private:
     QCheckBox *chkRotate;
     QCheckBox *chkFullScreen;
     QCheckBox *chkVirtKeyb;
-    QVBoxLayout *layout;
+    QGridLayout *layout;
     int getKeyPng(int x, int y);
     void loadCfg(QString prog);
     void saveCfg(QString prog);

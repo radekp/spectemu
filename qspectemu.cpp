@@ -276,18 +276,18 @@ QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
     chkQvga = new QCheckBox(tr("Qvga (320x240)"), this);
     chkVirtKeyb = new QCheckBox(tr("Virtual keyboard"), this);
 
-    layout = new QVBoxLayout(this);
-    layout->addWidget(lw);
-    layout->addWidget(lProg);
-    layout->addWidget(chkFullScreen);
-    layout->addWidget(chkRotate);
-    layout->addWidget(chkQvga);
-    layout->addWidget(chkVirtKeyb);
-    layout->addWidget(bBind);
-    layout->addWidget(bSnap);
-    layout->addWidget(bKbd);
-    layout->addWidget(bBack);
-    layout->addWidget(bOk);
+    layout = new QGridLayout(this);
+    layout->addWidget(lProg, 0, 0, 1, 2);
+    layout->addWidget(chkFullScreen, 1, 0);
+    layout->addWidget(chkRotate, 2, 0);
+    layout->addWidget(chkQvga, 3, 0);
+    layout->addWidget(chkVirtKeyb, 4, 0);
+    layout->addWidget(lw, 5, 0, 1, 2);
+    layout->addWidget(bBind, 6, 0);
+    layout->addWidget(bKbd, 6, 1);
+    layout->addWidget(bSnap, 7, 0);
+    layout->addWidget(bBack, 8, 0);
+    layout->addWidget(bOk, 8, 1);
 
     kbpix.load(":/qspectkey.png");
 
@@ -813,7 +813,10 @@ void QSpectemu::loadCfg(QString prog)
             bind = bind.nextSiblingElement("bind");
         }
     }
-
+    if(list)
+    {
+        lw->setCurrentRow(0);
+    }
     f.close();
 }
 
