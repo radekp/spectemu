@@ -10,6 +10,7 @@ bool rotated;                           // true for display rotated
 bool fullScreen;                        // true to play in fullscreen
 bool qvga;                              // true to display in qvga (320x240)
 bool virtKeyb;                          // true to display virtual keyboard
+QString url;                            // program url for download
 QTime counter;
 extern int endofsingle;
 
@@ -296,6 +297,7 @@ QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
     argc = 0;
     argv = NULL;
     rotated = false;
+    qspectemuDir = QDir::homePath() + "/.qspectemu";
     counter.start();
 
     normalScreenWidget = qspectemu = this;
@@ -740,7 +742,7 @@ void QSpectemu::loadCfg(QString prog)
     }
 
     QDomDocument doc;
-    QDir dir(QDir::homePath() + "/.qspectemu");
+    QDir dir(qspectemuDir);
     if(!dir.exists())
     {
         dir.mkpath(dir.path());
@@ -793,6 +795,8 @@ void QSpectemu::loadCfg(QString prog)
         QString vkAttr = progElem.attribute("virtkeyboard");
         virtKeyb = (vkAttr == "yes");
 
+        url = progElem.attribute("url");
+
         QDomElement bindsElem = progElem.firstChildElement("binds");
         if(bindsElem.isNull())
         {
@@ -824,7 +828,7 @@ void QSpectemu::loadCfg(QString prog)
 void QSpectemu::saveCfg(QString prog)
 {
     QDomDocument doc;
-    QString cfgFile = QDir::homePath() + "/.qspectemu/qspectemu.xml";
+    QString cfgFile = qspectemuDir + "/qspectemu.xml";
     QFile f(cfgFile);
     if(f.exists())
     {
@@ -905,6 +909,11 @@ void QSpectemu::saveCfg(QString prog)
 void QSpectemu::saveCurrentProgCfg()
 {
     saveCfg(currentProg);
+}
+
+bool QSpectemu::downloadUrl(QString url, QString localFile)
+{
+    return true;
 }
 
 void QSpectemu::okClicked()

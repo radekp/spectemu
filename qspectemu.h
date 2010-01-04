@@ -64,6 +64,7 @@ public:
 private:
     int argc;
     char **argv;
+    QString qspectemuDir;
     QString currentProg;
     Screen screen;
     QPixmap kbpix;
@@ -86,6 +87,7 @@ private:
     void saveCfg(QString prog);
     void saveCurrentProgCfg();
     void showInFullScreen();
+    bool downloadUrl(QString url, QString localFile);
 
 private slots:
     void okClicked();
