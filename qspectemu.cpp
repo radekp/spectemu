@@ -294,7 +294,7 @@ QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
     //setAttribute(Qt::WA_NoSystemBackground);
 
     argc = 0;
-    argv = 0;
+    argv = NULL;
     rotated = false;
     counter.start();
 
@@ -929,12 +929,15 @@ void QSpectemu::okClicked()
             return;
         }
 
-        QStringList args = QApplication::arguments();
-        argc = args.count();
-        argv = (char **) malloc_err(sizeof(char *) * argc);
-        for(int i = 0; i < argc; i++)
+        if(argv == NULL)
         {
-            argv[i] = strdup((char *) args.at(i).toLocal8Bit().constData());
+            QStringList args = QApplication::arguments();
+            argc = args.count();
+            argv = (char **) malloc_err(sizeof(char *) * argc);
+            for(int i = 0; i < argc; i++)
+            {
+                argv[i] = strdup((char *) args.at(i).toLocal8Bit().constData());
+            }
         }
 
         spma_init_privileged();
