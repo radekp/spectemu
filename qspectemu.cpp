@@ -239,6 +239,8 @@ QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
 #endif
     Q_UNUSED(f);
 
+    setFocusPolicy(Qt::StrongFocus);
+
     // Initialize only minimum for fullscreen widget
     if(normalScreenWidget != NULL)
     {
