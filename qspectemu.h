@@ -16,8 +16,10 @@
 #include <QListWidgetItem>
 #include <QProcess>
 #include <QMessageBox>
+#include <QProgressBar>
 #include <QtXml>
 #include <QFile>
+#include <QTcpSocket>
 #ifdef QTOPIA
 #include <QtopiaApplication>
 #endif
@@ -49,6 +51,7 @@ public:
     {
         ScreenProgList,             // list of available programs
         ScreenProgMenu,             // menu for slected program options
+        ScreenProgDownload,         // downloading program from internet
         ScreenKeyboardPng,          // big on screen keyboard
         ScreenKeyboardPngBind,      // big on screen keyboard while binding key
         ScreenBindings,             // showing how keys are binded and allow edit/add keys
@@ -66,17 +69,20 @@ private:
     char **argv;
     QString qspectemuDir;
     QString currentProg;
+    QString currentProgFullPath;
     Screen screen;
     QPixmap kbpix;
     int pressedKeyX;                // x and y of pressed on screen key
     int pressedKeyY;
+    bool abort;
     QListWidget *lw;
     QPushButton *bOk;
     QPushButton *bBack;
     QPushButton *bBind;
     QPushButton *bKbd;
     QPushButton *bSnap;
-    QLabel *lProg;
+    QLabel *label;
+    QProgressBar *progress;
     QCheckBox *chkQvga;
     QCheckBox *chkRotate;
     QCheckBox *chkFullScreen;
@@ -87,7 +93,8 @@ private:
     void saveCfg(QString prog);
     void saveCurrentProgCfg();
     void showInFullScreen();
-    bool downloadUrl(QString url, QString localFile);
+    bool download(QString url, QString destPath, QString filename);
+    void setProgramFullPath();
 
 private slots:
     void okClicked();

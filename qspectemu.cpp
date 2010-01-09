@@ -251,12 +251,14 @@ QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
 
     lw = new QListWidget(this);
 
-    lProg = new QLabel(this);
-    lProg->setAlignment(Qt::AlignCenter);
-    QFont font = lProg->font();
+    label = new QLabel(this);
+    label->setAlignment(Qt::AlignCenter);
+    QFont font = label->font();
     font.setBold(true);
-    lProg->setFont(font);
+    label->setFont(font);
 
+    progress = new QProgressBar(this);
+    
     bOk = new QPushButton(tr(">"), this);
     connect(bOk, SIGNAL(clicked()), this, SLOT(okClicked()));
 
@@ -278,17 +280,18 @@ QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
     chkVirtKeyb = new QCheckBox(tr("Virtual keyboard"), this);
 
     layout = new QGridLayout(this);
-    layout->addWidget(lProg, 0, 0, 1, 2);
-    layout->addWidget(chkFullScreen, 1, 0);
-    layout->addWidget(chkRotate, 2, 0);
-    layout->addWidget(chkQvga, 3, 0);
-    layout->addWidget(chkVirtKeyb, 4, 0);
-    layout->addWidget(lw, 5, 0, 1, 2);
-    layout->addWidget(bBind, 6, 0);
-    layout->addWidget(bKbd, 6, 1);
-    layout->addWidget(bSnap, 7, 0);
-    layout->addWidget(bBack, 8, 0);
-    layout->addWidget(bOk, 8, 1);
+    layout->addWidget(label, 0, 0, 1, 2);
+    layout->addWidget(progress, 1, 0, 1, 2);
+    layout->addWidget(chkFullScreen, 2, 0);
+    layout->addWidget(chkRotate, 3, 0);
+    layout->addWidget(chkQvga, 4, 0);
+    layout->addWidget(chkVirtKeyb, 5, 0);
+    layout->addWidget(lw, 6, 0, 1, 2);
+    layout->addWidget(bBind, 7, 0);
+    layout->addWidget(bKbd, 7, 1);
+    layout->addWidget(bSnap, 8, 0);
+    layout->addWidget(bBack, 9, 0);
+    layout->addWidget(bOk, 9, 1);
 
     kbpix.load(":/qspectkey.png");
 
@@ -398,14 +401,18 @@ void QSpectemu::showScreen(QSpectemu::Screen scr)
     bKbd->setVisible(scr == ScreenProgMenu && screen == ScreenProgRunning);
     bSnap->setVisible(scr == ScreenProgMenu && screen == ScreenProgRunning);
     bOk->setVisible(scr == ScreenProgList || scr == ScreenProgMenu);
-    bBack->setVisible(scr == ScreenProgList || scr == ScreenProgMenu);
+    bBack->setVisible(scr == ScreenProgList || scr == ScreenProgMenu || scr == ScreenProgDownload);
     chkFullScreen->setVisible(scr == ScreenProgMenu);
     chkQvga->setVisible(scr == ScreenProgMenu);
     chkRotate->setVisible(scr == ScreenProgMenu);
     chkVirtKeyb->setVisible(scr == ScreenProgMenu);
     lw->setVisible(scr == ScreenProgList);
-    lProg->setVisible(scr == ScreenProgMenu);
-    lProg->setText(currentProg);
+    label->setVisible(scr == ScreenProgMenu || scr == ScreenProgDownload);
+    if(scr == ScreenProgMenu)
+    {
+        label->setText(currentProg);
+    }
+    progress->setVisible(scr == ScreenProgDownload);
 
     this->screen = scr;
     update();
@@ -911,8 +918,160 @@ void QSpectemu::saveCurrentProgCfg()
     saveCfg(currentProg);
 }
 
-bool QSpectemu::downloadUrl(QString url, QString localFile)
+void QSpectemu::setProgramFullPath()
 {
+    currentProgFullPath = qspectemuDir + "/" + currentProg;
+}
+
+bool QSpectemu::download(QString url, QString destPath, QString filename)
+{
+    label->setText(tr("Downloading") + " " + filename);
+    showScreen(ScreenProgDownload);
+
+    QString host = url;
+    QString reqPath;
+    int port = 80;
+
+    if(url.startsWith("http://"))
+    {
+        host.remove(0, 7);
+    }
+
+    int colonIndex = host.indexOf(':');
+    int slashIndex = host.indexOf('/');
+    if(slashIndex < 0)
+    {
+        return false;
+    }
+    reqPath = host.right(host.length() - slashIndex).replace(" ", "%20");
+    host = host.left(slashIndex);
+    if(colonIndex > 0)
+    {
+        QString portStr = host.right(host.length() - colonIndex - 1);
+        host = host.left(colonIndex);
+        port = portStr.toInt(0, 10);
+    }
+
+connect:
+    QTcpSocket sock(this);
+    sock.setReadBufferSize(65535);
+    sock.connectToHost(host, port);
+    if(!sock.waitForConnected(5000))
+    {
+        QMessageBox::critical(this, tr("qspectemu"), sock.errorString());
+        return false;
+    }
+
+    QByteArray req("GET ");
+    req.append(reqPath);
+    req.append(" HTTP/1.1\r\nHost: ");
+    req.append(host);
+    req.append(':');
+    req.append(QByteArray::number(port));
+    req.append("\r\n\r\n");
+
+    sock.write(req);
+    sock.flush();
+    sock.waitForBytesWritten();
+
+    int contentLen = 0;
+    bool html = false;
+    QByteArray line;
+    for(;;)
+    {
+        line = sock.readLine();
+        if(line.isEmpty())
+        {
+            if(sock.waitForReadyRead(5000))
+            {
+                continue;
+            }
+            break;
+        }
+        if(line.trimmed().isEmpty())
+        {
+            break;
+        }
+        html = html | (line.indexOf("Content-Type: text/html") == 0);
+        if(line.indexOf("Content-Length: ") == 0)
+        {
+            contentLen = line.remove(0, 16).trimmed().toInt(0, 10);
+        }
+    }
+
+    if(html)
+    {
+        QByteArray text = sock.readAll();
+        sock.close();
+        if(text.length() == 0)
+        {
+            QMessageBox::critical(this, tr("qspectemu"),
+                                  tr("No response from ") + host);
+            return false;
+        }
+        text.replace("</br>", "\n");
+        if(QMessageBox::information(this, "qspectemu", text,
+                                 QMessageBox::Ok | QMessageBox::Retry) == QMessageBox::Retry)
+        {
+            goto connect;
+        }
+
+        return false;
+    }
+
+    QFile f(destPath);
+    if(!f.open(QFile::WriteOnly))
+    {
+        QMessageBox::critical(this, tr("qspectemu"),
+                              tr("Unable to save file:\r\n\r\n") + f.errorString());
+        sock.close();
+        return false;
+    }
+
+#ifdef QTOPIA
+     QtopiaApplication::setPowerConstraint(QtopiaApplication::DisableSuspend);
+#endif
+
+    if(contentLen <= 0)
+    {
+        QMessageBox::critical(this, tr("qspectemu"), tr("Couldnt read content length"));
+        contentLen = 0x7fffffff;
+    }
+    progress->setMaximum(contentLen);
+    progress->setValue(0);
+    int remains = contentLen;
+
+    char buf[65535];
+    int count;
+    abort = false;
+    for(;;)
+    {
+        QApplication::processEvents();
+        if(abort)
+        {
+            break;
+        }
+        count = sock.read(buf, 65535);
+        if(count < 0)
+        {
+            break;
+        }
+        f.write(buf, count);
+        f.flush();
+        remains -= count;
+        if(remains <= 0)
+        {
+            break;
+        }
+        progress->setValue(contentLen - remains);
+    }
+    f.close();
+    sock.close();
+
+#ifdef QTOPIA
+    QtopiaApplication::setPowerConstraint(QtopiaApplication::Enable);
+#endif
+
     return true;
 }
 
@@ -926,6 +1085,7 @@ void QSpectemu::okClicked()
             return;
         }
         currentProg = sel->text();
+        setProgramFullPath();
         loadCfg(currentProg);
         showScreen(QSpectemu::ScreenProgMenu);
     }
@@ -936,6 +1096,19 @@ void QSpectemu::okClicked()
             sp_paused = 0;
             showScreen(QSpectemu::ScreenProgRunning);
             return;
+        }
+
+        if(!QFile::exists(currentProgFullPath) && url.length() > 0)
+        {
+            if(QMessageBox::question(this, "Dowload program?", url, QMessageBox::Yes | QMessageBox::No) == QMessageBox::No)
+            {
+                return;
+            }
+            if(!download(url, currentProgFullPath, currentProg))
+            {
+                showScreen(ScreenProgMenu);
+                return;
+            }
         }
 
         if(argv == NULL)
@@ -954,9 +1127,9 @@ void QSpectemu::okClicked()
         check_params(argc, argv);
         sp_init();
 
-        if(QFile::exists(currentProg))
+        if(QFile::exists(currentProgFullPath))
         {
-            load_snapshot_file_type(currentProg.toLatin1().data(), -1);
+            load_snapshot_file_type(currentProgFullPath.toLatin1().data(), -1);
         }
 
         showScreen(QSpectemu::ScreenProgRunning);
@@ -968,16 +1141,20 @@ void QSpectemu::okClicked()
 
 void QSpectemu::backClicked()
 {
-    if(screen == QSpectemu::ScreenProgMenu)
+    if(screen == ScreenProgMenu)
     {
         sp_paused = 0;
         endofsingle = 1;
         showScreen(QSpectemu::ScreenProgList);
         saveCurrentProgCfg();
     }
-    else if(screen == QSpectemu::ScreenProgList)
+    else if(screen == ScreenProgList)
     {
         close();
+    }
+    else if(screen == ScreenProgDownload)
+    {
+        abort = true;
     }
 }
 
@@ -1014,10 +1191,11 @@ void QSpectemu::snapClicked()
     {
         num++;
         currentProg = name + QString::number(num) + ext;
+        setProgramFullPath();
     }
-    while(QFile::exists(currentProg));
+    while(QFile::exists(currentProgFullPath));
 
-    save_snapshot_file(currentProg.toAscii().data());
+    save_snapshot_file(currentProgFullPath.toAscii().data());
     saveCurrentProgCfg();
     loadCfg(NULL);
     showScreen(ScreenProgMenu);
