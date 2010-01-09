@@ -246,6 +246,7 @@ QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
     if(normalScreenWidget != NULL)
     {
         fullScreenWidget = this;
+        kbpix = normalScreenWidget->kbpix;
         return;
     }
 
@@ -331,6 +332,7 @@ void QSpectemu::showScreen(QSpectemu::Screen scr)
     if(this == fullScreenWidget)
     {
         normalScreenWidget->showScreen(scr);
+        this->screen = scr;
         update();
         return;
     }
@@ -357,7 +359,7 @@ void QSpectemu::showScreen(QSpectemu::Screen scr)
 
     bool leaveFullScreen = fullScreen &&
                            (screen == QSpectemu::ScreenProgRunning ||
-                            screen == QSpectemu::ScreenBindings);
+                            screen == QSpectemu::ScreenKeyboardPngBind);
 
     if(enterFullScreen)
     {
