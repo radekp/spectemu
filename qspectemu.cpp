@@ -759,12 +759,15 @@ void QSpectemu::loadCfg(QString prog)
     QFile f(dir.filePath("qspectemu.xml"));
     if(!f.exists())
     {
-        if(!f.open(QIODevice::WriteOnly))
+        QFile defXml(":/qspectemu.xml");
+        if(!defXml.open(QIODevice::ReadOnly) || !f.open(QIODevice::WriteOnly))
         {
             return;
         }
-        f.write("<qspectemu>\n  <prog file=\"program1.sna\" rotate=\"no\" fullscreen=\"no\" qvga=\"no\" virtKeyboard=\"no\"></prog>\n</qspectemu>");
+        QByteArray content = defXml.readAll();
+        f.write(content);
         f.close();
+        defXml.close();
     }
     if(!f.open(QIODevice::ReadOnly))
     {

@@ -1,0 +1,42 @@
+<qspectemu>
+ <prog fullscreen="no" virtkeyboard="no" file="BOULDASH.Z80" rotate="no" qvga="no" url="http://activationrecord.net/radekp/qspectemu/progs/BOULDASH.Z80" >
+  <binds>
+   <bind x="32" y="32" key="16777265" />
+  </binds>
+ </prog>
+ <prog fullscreen="no" virtkeyboard="no" file="DANDARE3.Z80" rotate="no" qvga="no" url="http://activationrecord.net/radekp/qspectemu/progs/DANDARE3.Z80" >
+  <binds>
+   <bind x="32" y="32" key="16777265" />
+  </binds>
+ </prog>
+ <prog fullscreen="no" virtkeyboard="no" file="DEFCROWN.Z80" rotate="no" qvga="no" url="http://activationrecord.net/radekp/qspectemu/progs/DEFCROWN.Z80" >
+  <binds>
+   <bind x="32" y="32" key="16777265" />
+  </binds>
+ </prog>
+ <prog fullscreen="no" virtkeyboard="no" file="ELITE.Z80" rotate="no" qvga="no" url="http://activationrecord.net/radekp/qspectemu/progs/ELITE.Z80" >
+  <binds>
+   <bind x="32" y="32" key="16777265" />
+  </binds>
+ </prog>
+ <prog fullscreen="no" virtkeyboard="no" file="EXOLON.Z80" rotate="no" qvga="no" url="http://activationrecord.net/radekp/qspectemu/progs/EXOLON.Z80" >
+  <binds>
+   <bind x="32" y="32" key="16777265" />
+  </binds>
+ </prog>
+ <prog fullscreen="no" virtkeyboard="no" file="MANIC.Z80" rotate="no" qvga="no" url="http://activationrecord.net/radekp/qspectemu/progs/MANIC.Z80" >
+  <binds>
+   <bind x="32" y="32" key="16777265" />
+  </binds>
+ </prog>
+ <prog fullscreen="no" virtkeyboard="no" file="NETHEREA.Z80" rotate="no" qvga="no" url="http://activationrecord.net/radekp/qspectemu/progs/NETHEREA.Z80" >
+  <binds>
+   <bind x="32" y="32" key="16777265" />
+  </binds>
+ </prog>
+ <prog fullscreen="no" virtkeyboard="no" file="SABOTEUR.Z80" rotate="no" qvga="no" url="http://activationrecord.net/radekp/qspectemu/progs/SABOTEUR.Z80" >
+  <binds>
+   <bind x="32" y="32" key="16777265" />
+  </binds>
+ </prog>
+</qspectemu>
