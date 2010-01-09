@@ -1328,3 +1328,23 @@ void spscr_toggle_fullscreen(void)
 #ifdef	__cplusplus
 };
 #endif
+
+#ifdef QTOPIA
+
+QTOPIA_ADD_APPLICATION(QTOPIA_TARGET,QSpectemu)
+QTOPIA_MAIN
+
+#else
+
+#include <QtGui/QApplication>
+#include "qspectemu.h"
+
+int main(int argc, char *argv[])
+{
+    QApplication a(argc, argv);
+    QSpectemu w;
+    w.show();
+    return a.exec();
+}
+
+#endif

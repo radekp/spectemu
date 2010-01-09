@@ -1,5 +1,5 @@
 TEMPLATE=app
-TARGET=spectemu
+TARGET=qspectemu
 
 CONFIG+=qtopia
 QT+=xml network
@@ -18,7 +18,7 @@ pkg [
     maintainer="Radek Polak <psonek2@seznam.cz>"
 ]
 
-RESOURCES = resources.qrc
+RESOURCES = qresources.qrc
 
 # Input files
 HEADERS=qspectemu.h
@@ -54,8 +54,7 @@ SOURCES=interf.c \
     z80optab.c \
     z80_op2.c \
     z80_op5.c \
-    qspectemu.cpp \
-    main.cpp
+    qspectemu.cpp
 
 # Install rules
 target [

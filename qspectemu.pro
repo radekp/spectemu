@@ -1,7 +1,8 @@
 TEMPLATE = app
-TARGET = spectemu
+TARGET = qspectemu
 CONFIG += qtopia
-QT += xml network
+QT += xml \
+    network
 LIBS += -lX11
 DEFINES += HAVE_MITSHM \
     HAVE_SHMQUERY \
@@ -13,8 +14,7 @@ DEFINES += HAVE_MITSHM \
 # I18n info
 STRING_LANGUAGE = en_US
 LANGUAGES = en_US
-
-RESOURCES = resources.qrc
+RESOURCES = qresources.qrc
 
 # Input files
 HEADERS = qspectemu.h
@@ -49,5 +49,4 @@ SOURCES = interf.c \
     z80optab.c \
     z80_op2.c \
     z80_op5.c \
-    qspectemu.cpp \
-    main.cpp
+    qspectemu.cpp
