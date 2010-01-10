@@ -1,0 +1,10 @@
+[Desktop Entry]
+Comment[]=ZX spectrum emulator
+Exec=qspectemu
+Type=Application
+Name[]=QSpectemu
+Icon=qspectemu/qspectemu
+[Translation]
+File=QtopiaGames
+Context=qspectemu
+

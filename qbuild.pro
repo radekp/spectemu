@@ -11,7 +11,7 @@ LANGUAGES=en_US
 
 # Package info
 pkg [
-    name=spectemu
+    name=qspectemu
     desc="ZX spectrum emulator"
     license=GPLv2
     version=1.0
@@ -64,12 +64,12 @@ target [
 
 desktop [
     hint=desktop
-    files=spectemu.desktop
-    path=/apps/Applications
+    files=qspectemu.desktop
+    path=/apps/Games
 ]
 
 pics [
     hint=pics
     files=pics/*
-    path=/pics/spectemu
+    path=/pics/qspectemu
 ]
