@@ -235,11 +235,8 @@ QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
 {
     Q_UNUSED(f);
 
-#ifdef QTOPIA
-    QtopiaApplication::setInputMethodHint(this, QtopiaApplication::AlwaysOn);
-#endif
-
     setFocusPolicy(Qt::StrongFocus);
+    pngKeyDown = false;
 
     // Initialize only minimum for fullscreen widget
     if(normalScreenWidget != NULL)
@@ -298,6 +295,7 @@ QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
     argc = 0;
     argv = NULL;
     rotated = false;
+    screen = ScreenNone;
     qspectemuDir = QDir::homePath() + "/.qspectemu";
     counter.start();
 
@@ -336,9 +334,9 @@ QSpectemuMainWindow::QSpectemuMainWindow(QWidget *parent, Qt::WFlags f)
 #endif
     Q_UNUSED(f);
 
+    mainWin = this;
     normalScreenWidget = new QSpectemu(this);
     setCentralWidget(qspectemu);
-    mainWin = this;
 }
 
 QSpectemuMainWindow::~QSpectemuMainWindow()
@@ -362,6 +360,21 @@ bool QSpectemu::isQvga(QSpectemu::Screen scr)
 
 void QSpectemu::showScreen(QSpectemu::Screen scr)
 {
+#if QTOPIA
+    if(scr == ScreenProgRunning)
+    {
+        QtopiaApplication::setInputMethodHint(this, QtopiaApplication::AlwaysOn);
+        QtopiaApplication::setInputMethodHint(mainWin, QtopiaApplication::AlwaysOn);
+        QtopiaApplication::instance()->showInputMethod();
+    }
+    if(screen == ScreenProgRunning || screen == ScreenNone)
+    {
+        QtopiaApplication::setInputMethodHint(this, QtopiaApplication::AlwaysOn);
+        QtopiaApplication::setInputMethodHint(mainWin, QtopiaApplication::AlwaysOff);
+        QtopiaApplication::instance()->hideInputMethod();
+    }
+#endif
+
     if(this == fullScreenWidget)
     {
         normalScreenWidget->showScreen(scr);
@@ -426,19 +439,6 @@ void QSpectemu::showScreen(QSpectemu::Screen scr)
     {
         setRes(640480);
     }
-
-#if QTOPIA
-    if(scr == ScreenProgRunning)
-    {
-        QtopiaApplication::setInputMethodHint(mainWin, QtopiaApplication::AlwaysOn);
-        QtopiaApplication::instance()->showInputMethod();
-    }
-    if(screen == ScreenProgRunning)
-    {
-        QtopiaApplication::setInputMethodHint(mainWin, QtopiaApplication::AlwaysOff);
-        QtopiaApplication::instance()->hideInputMethod();
-    }
-#endif
 
     this->screen = scr;
     update();
@@ -524,11 +524,18 @@ bool QSpectemu::setRes(int xy)
 
 int QSpectemu::getKeyPng(int x, int y)
 {
-    // Small screen - pressed bottom part of keyboard?
-    if(kbpix.width() > width() && y > kbpix.height())
+//    // Small screen - pressed bottom part of keyboard?
+//    if(kbpix.width() > width() && y > kbpix.height())
+//    {
+//        y -= kbpix.height();
+//        x += kbpix.width() - width();
+//    }
+
+    if(height() > width())
     {
-        y -= kbpix.height();
-        x += kbpix.width() - width();
+        int nx = kbpix.width() - y;
+        y = x;
+        x = nx;
     }
 
     for(int i = 0; i < OSKEYSPNG_SIZE; i++)
@@ -587,11 +594,16 @@ void QSpectemu::paintEvent(QPaintEvent *)
         }
         case QSpectemu::ScreenKeyboardPngBind:
         {
-            p.drawPixmap(0, 0, kbpix);
-            if(kbpix.width() > width())
+            if(height() > width())
             {
-                p.drawPixmap(width() - kbpix.width(), kbpix.height(), kbpix);
+                p.rotate(-90);
+                p.translate(-kbpix.width(), 0);
             }
+            p.drawPixmap(0, 0, kbpix);
+//            if(kbpix.width() > width())
+//            {
+//                p.drawPixmap(width() - kbpix.width(), kbpix.height(), kbpix);
+//            }
         }
         break;
         case QSpectemu::ScreenBindings:
@@ -700,6 +712,7 @@ void QSpectemu::mousePressEvent(QMouseEvent *e)
     {
         sp_paused = 0;
         pressKey(getKeyPng(e->x(), e->y()));
+        pngKeyDown = true;
         showScreen(QSpectemu::ScreenProgRunning);
     }
     else if(screen == QSpectemu::ScreenKeyboardPngBind)
@@ -720,11 +733,17 @@ void QSpectemu::mousePressEvent(QMouseEvent *e)
 
 void QSpectemu::mouseReleaseEvent(QMouseEvent *)
 {
+    pngKeyDown = false;
     releaseAllKeys();
 }
 
 void QSpectemu::mouseMoveEvent(QMouseEvent *e)
 {
+    if(pngKeyDown)
+    {
+        return;     // ingore mouse moves while png key is pressed
+    }
+
     int x = e->x();
     int y = e->y();
 

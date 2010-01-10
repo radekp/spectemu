@@ -54,6 +54,7 @@ class QSpectemu : public QWidget
 public:
     enum Screen
     {
+        ScreenNone,                 // when application is uninitialized
         ScreenProgList,             // list of available programs
         ScreenProgMenu,             // menu for slected program options
         ScreenProgDownload,         // downloading program from internet
@@ -80,6 +81,7 @@ private:
     int pressedKeyX;                // x and y of pressed on screen key
     int pressedKeyY;
     bool abort;
+    bool pngKeyDown;                 // true if key from png keyboard is down
     QListWidget *lw;
     QPushButton *bOk;
     QPushButton *bBack;
