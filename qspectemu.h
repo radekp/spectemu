@@ -93,6 +93,8 @@ private:
     QCheckBox *chkFullScreen;
     QCheckBox *chkVirtKeyb;
     QGridLayout *layout;
+    bool isFullScreen(Screen scr);
+    bool isQvga(Screen scr);
     int getKeyPng(int x, int y);
     void loadCfg(QString prog);
     void saveCfg(QString prog);

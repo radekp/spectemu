@@ -332,6 +332,8 @@ QSpectemuMainWindow::QSpectemuMainWindow(QWidget *parent, Qt::WFlags f)
 {
 #ifdef QTOPIA
     this->setWindowState(Qt::WindowMaximized);
+    QMenu *m = QSoftMenuBar::menuFor(this);
+    m->addAction("");
 #else
     resize(640, 480);
 #endif
@@ -345,6 +347,20 @@ QSpectemuMainWindow::QSpectemuMainWindow(QWidget *parent, Qt::WFlags f)
 QSpectemuMainWindow::~QSpectemuMainWindow()
 {
 
+}
+
+bool QSpectemu::isFullScreen(QSpectemu::Screen scr)
+{
+    return (scr == ScreenBindings ||
+            scr == ScreenKeyboardPng ||
+            scr == ScreenKeyboardPngBind ||
+            scr == ScreenProgRunning);
+}
+
+bool QSpectemu::isQvga(QSpectemu::Screen scr)
+{
+    return (scr == ScreenProgRunning ||
+            scr == ScreenKeyboardPng);
 }
 
 void QSpectemu::showScreen(QSpectemu::Screen scr)
@@ -372,52 +388,6 @@ void QSpectemu::showScreen(QSpectemu::Screen scr)
         qvga = chkQvga->isChecked();
         virtKeyb = chkVirtKeyb->isChecked();
     }
-
-    bool enterFullScreen = fullScreen &&
-                           (scr == ScreenProgRunning ||
-                            scr == ScreenBindings);
-
-    bool leaveFullScreen = fullScreen &&
-                           (screen == ScreenProgRunning ||
-                            screen == ScreenKeyboardPngBind);
-
-    bool enterQvga = qvga && (scr == ScreenProgRunning);
-    bool leaveQvga = qvga && (screen == ScreenProgRunning);
-
-    if(enterFullScreen)
-    {
-        normalScreenWidget->hide();
-        qspectemu = fullScreenWidget;
-        fullScreenWidget->screen = scr;
-        fullScreenWidget->showInFullScreen();
-    }
-    if(leaveFullScreen)
-    {
-        fullScreenWidget->hide();
-        qspectemu = normalScreenWidget;
-        normalScreenWidget->show();
-    }
-    if(enterQvga)
-    {
-        setRes(320240);
-    }
-    if(leaveQvga)
-    {
-        setRes(640480);
-    }
-
-#if QTOPIA
-    if(scr == ScreenProgRunning && virtKeyb)
-    {
-        QtopiaApplication::setInputMethodHint(mainWin, QtopiaApplication::AlwaysOn);
-        QtopiaApplication::instance()->showInputMethod();
-    }
-    if(screen == ScreenProgRunning && virtKeyb)
-    {
-        QtopiaApplication::instance()->hideInputMethod();
-        QtopiaApplication::setInputMethodHint(mainWin, QtopiaApplication::AlwaysOff);
-    }
-#endif
     
     bBind->setVisible(scr == ScreenProgMenu);
     bKbd->setVisible(scr == ScreenProgMenu && screen == ScreenProgRunning);
@@ -435,6 +405,46 @@ void QSpectemu::showScreen(QSpectemu::Screen scr)
         label->setText(currentProg);
     }
     progress->setVisible(scr == ScreenProgDownload);
+
+    bool enterFullScreen = fullScreen && isFullScreen(scr) && !isFullScreen(screen);
+    bool leaveFullScreen = fullScreen && isFullScreen(screen) && !isFullScreen(scr);
+    if(enterFullScreen)
+    {
+        normalScreenWidget->hide();
+        qspectemu = fullScreenWidget;
+        fullScreenWidget->screen = scr;
+        fullScreenWidget->showInFullScreen();
+    }
+    if(leaveFullScreen)
+    {
+        fullScreenWidget->hide();
+        qspectemu = normalScreenWidget;
+        normalScreenWidget->show();
+    }
+
+    bool enterQvga = qvga && isQvga(scr) && !isQvga(screen);
+    bool leaveQvga = qvga && isQvga(screen) && !isQvga(scr);
+    if(enterQvga)
+    {
+        setRes(320240);
+    }
+    if(leaveQvga)
+    {
+        setRes(640480);
+    }
+
+#if QTOPIA
+    if(virtKeyb && scr == ScreenProgRunning)
+    {
+        QtopiaApplication::setInputMethodHint(mainWin, QtopiaApplication::AlwaysOn);
+        QtopiaApplication::instance()->showInputMethod();
+    }
+    if(virtKeyb && screen == ScreenProgRunning)
+    {
+        QtopiaApplication::setInputMethodHint(mainWin, QtopiaApplication::AlwaysOff);
+        QtopiaApplication::instance()->hideInputMethod();
+    }
+#endif
 
     this->screen = scr;
     update();
@@ -575,6 +585,12 @@ void QSpectemu::paintEvent(QPaintEvent *)
         }
         break;
         case QSpectemu::ScreenKeyboardPng:
+        {
+            if(qvga)
+            {
+                p.scale(0.5, 0.5);
+            }
+        }
         case QSpectemu::ScreenKeyboardPngBind:
         {
             p.drawPixmap(0, 0, kbpix);
