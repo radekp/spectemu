@@ -9,8 +9,8 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="100"
-   height="100"
+   width="50"
+   height="50"
    id="svg2"
    version="1.1"
    inkscape:version="0.47pre4 r22446"
@@ -104,6 +104,25 @@
          y="-144.35619"
          transform="matrix(0.19153699,0.98148539,-0.97230654,0.23370922,0,0)" />
     </clipPath>
+    <inkscape:perspective
+       id="perspective2839"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath2853">
+      <rect
+         style="fill:#ff0000;fill-opacity:1"
+         id="rect2855"
+         width="127.9184"
+         height="141.66672"
+         x="991.78351"
+         y="-144.35619"
+         transform="matrix(0.19153699,0.98148539,-0.97230654,0.23370922,0,0)" />
+    </clipPath>
   </defs>
   <sodipodi:namedview
      id="base"
@@ -113,13 +132,13 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="2.9080845"
-     inkscape:cx="-6.0727249"
-     inkscape:cy="61.104776"
+     inkscape:cx="-56.072715"
+     inkscape:cy="11.104773"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
      inkscape:window-width="1440"
-     inkscape:window-height="803"
+     inkscape:window-height="804"
      inkscape:window-x="-4"
      inkscape:window-y="39"
      inkscape:window-maximized="1" />
@@ -138,11 +157,11 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(-5.1580343,-949.20148)">
+     transform="translate(-55.158025,-949.20148)">
     <g
        id="g3691"
        transform="matrix(0.09143606,-0.34672943,0.38040382,0.06766429,-332.50454,1000.1507)"
-       clip-path="url(#clipPath2867)">
+       clip-path="url(#clipPath2853)">
       <rect
          style="fill:#fc5454;fill-opacity:1"
          y="988.36218"
