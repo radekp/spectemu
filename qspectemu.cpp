@@ -237,6 +237,7 @@ QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
 
     setFocusPolicy(Qt::StrongFocus);
     pngKeyDown = false;
+    screen = ScreenNone;
 
     // Initialize only minimum for fullscreen widget
     if(normalScreenWidget != NULL)
@@ -295,7 +296,6 @@ QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
     argc = 0;
     argv = NULL;
     rotated = false;
-    screen = ScreenNone;
     qspectemuDir = QDir::homePath() + "/.qspectemu";
     counter.start();
 
@@ -360,21 +360,6 @@ bool QSpectemu::isQvga(QSpectemu::Screen scr)
 
 void QSpectemu::showScreen(QSpectemu::Screen scr)
 {
-#if QTOPIA
-    if(scr == ScreenProgRunning)
-    {
-        QtopiaApplication::setInputMethodHint(this, QtopiaApplication::AlwaysOn);
-        QtopiaApplication::setInputMethodHint(mainWin, QtopiaApplication::AlwaysOn);
-        QtopiaApplication::instance()->showInputMethod();
-    }
-    if(screen == ScreenProgRunning || screen == ScreenNone)
-    {
-        QtopiaApplication::setInputMethodHint(this, QtopiaApplication::AlwaysOn);
-        QtopiaApplication::setInputMethodHint(mainWin, QtopiaApplication::AlwaysOff);
-        QtopiaApplication::instance()->hideInputMethod();
-    }
-#endif
-
     if(this == fullScreenWidget)
     {
         normalScreenWidget->showScreen(scr);
@@ -439,6 +424,24 @@ void QSpectemu::showScreen(QSpectemu::Screen scr)
     {
         setRes(640480);
     }
+
+#if QTOPIA
+    if(scr == ScreenProgRunning)
+    {
+        QApplication::processEvents();
+        QtopiaApplication::setInputMethodHint(normalScreenWidget, QtopiaApplication::AlwaysOn);
+        QtopiaApplication::setInputMethodHint(fullScreenWidget, QtopiaApplication::AlwaysOn);
+        QtopiaApplication::setInputMethodHint(mainWin, QtopiaApplication::AlwaysOn);
+        QtopiaApplication::instance()->showInputMethod();
+    }
+    if(screen == ScreenProgRunning || screen == ScreenNone)
+    {
+        QtopiaApplication::setInputMethodHint(normalScreenWidget, QtopiaApplication::AlwaysOff);
+        QtopiaApplication::setInputMethodHint(fullScreenWidget, QtopiaApplication::AlwaysOff);
+        QtopiaApplication::setInputMethodHint(mainWin, QtopiaApplication::AlwaysOff);
+        QtopiaApplication::instance()->hideInputMethod();
+    }
+#endif
 
     this->screen = scr;
     update();
