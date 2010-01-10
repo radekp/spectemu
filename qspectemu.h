@@ -69,6 +69,7 @@ public:
 
     void showScreen(QSpectemu::Screen);
     bool setRes(int xy);
+    void releaseKeysLater();
 
 private:
     int argc;
@@ -111,6 +112,7 @@ private slots:
     void kbdClicked();
     void snapClicked();
     void showScreenKeyboardPngBind();
+    void releaseKeysLaterImpl();
 
 protected:
     bool event(QEvent *);

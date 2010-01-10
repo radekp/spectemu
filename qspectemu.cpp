@@ -205,6 +205,15 @@ static void releaseKey(int key)
         return;
     }
 
+    // If frame diff is 0 we have to release the key later (after speccy
+    // registers that it was pressed.)
+    if(spkb_kbstate[ki].state > 0 && sp_int_ctr == spkb_kbstate[ki].frame)
+    {
+        spkb_kbstate[ki].state = 2;
+        qspectemu->releaseKeysLater();
+        return;
+    }
+
     spkb_kbstate[ki].state = 0;
     spkb_kbstate[ki].press = 0;
 
@@ -214,6 +223,22 @@ static void releaseKey(int key)
 
 static void releaseAllKeys()
 {
+    bool later = false;
+    for(int i = 0; i < NR_SPKEYS; i++)
+    {
+        // If frame diff is 0 we have to release the key later (after speccy
+        // registers that it was pressed.)
+        if(spkb_kbstate[i].state > 0 && sp_int_ctr == spkb_kbstate[i].frame)
+        {
+            spkb_kbstate[i].state = 2;
+            later = true;
+        }
+    }
+    if(later)
+    {
+        qspectemu->releaseKeysLater();
+        return;
+    }
     for(int i = 0; i < NR_SPKEYS; i++)
     {
         spkb_kbstate[i].state = 0;
@@ -632,6 +657,35 @@ void QSpectemu::paintEvent(QPaintEvent *)
         }
         break;
     }
+}
+
+void QSpectemu::releaseKeysLater()
+{
+    QTimer::singleShot(1, this, SLOT(releaseKeysLaterImpl()));
+}
+
+void QSpectemu::releaseKeysLaterImpl()
+{
+    for(int i = 0; i < NR_SPKEYS; i++)
+    {
+        if(spkb_kbstate[i].state == 2 &&
+           sp_int_ctr == spkb_kbstate[i].frame)
+        {
+            releaseKeysLater();
+            return;
+        }
+    }
+    for(int i = 0; i < NR_SPKEYS; i++)
+    {
+        if(spkb_kbstate[i].state == 2)
+        {
+            spkb_kbstate[i].state = 0;
+            spkb_kbstate[i].press = 0;
+        }
+    }
+
+    spkb_state_changed = 1;
+    process_keys();
 }
 
 void QSpectemu::keyPressEvent(QKeyEvent *e)
