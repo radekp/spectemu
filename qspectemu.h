@@ -1,6 +1,7 @@
 #ifndef QSPECTEMU_H
 #define QSPECTEMU_H
 
+#include <QMainWindow>
 #include <QWidget>
 #include <QTime>
 #include <QTimer>
@@ -14,6 +15,9 @@
 #include <QCheckBox>
 #include <QListWidget>
 #include <QListWidgetItem>
+#include <QMenu>
+#include <QAction>
+#include <QMenuBar>
 #include <QProcess>
 #include <QMessageBox>
 #include <QProgressBar>
@@ -21,6 +25,7 @@
 #include <QFile>
 #include <QTcpSocket>
 #ifdef QTOPIA
+#include <QSoftMenuBar>
 #include <QtopiaApplication>
 #endif
 
@@ -114,6 +119,13 @@ protected:
     void mouseReleaseEvent(QMouseEvent *);
     void mouseMoveEvent(QMouseEvent *);
 
+};
+
+class QSpectemuMainWindow : public QMainWindow
+{
+public:
+    QSpectemuMainWindow(QWidget *parent = 0, Qt::WFlags f = 0);
+    ~QSpectemuMainWindow();
 };
 
 #endif // QSPECTEMU_H

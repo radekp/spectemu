@@ -4,6 +4,7 @@
 QSpectemu *qspectemu = NULL;            // instance
 QSpectemu *fullScreenWidget = NULL;     // fullscreen instance (needed for Qtopia)
 QSpectemu *normalScreenWidget = NULL;   // non-fullscreen instance
+QSpectemuMainWindow *mainWin = NULL;    // main window
 QImage scr;                             // bitmap with speccy screen
 QImage scrR;                            // bitmap for rotated speccy screen
 bool rotated;                           // true for display rotated
@@ -231,14 +232,13 @@ static void showErr(QWidget *parent, QString err)
 }
 
 QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
-        : QWidget(parent)
+        : QWidget(parent, f)
 {
-#ifdef QTOPIA
-    this->setWindowState(Qt::WindowMaximized);
-#else
-    resize(640, 480);
-#endif
     Q_UNUSED(f);
+
+#ifdef QTOPIA
+    QtopiaApplication::setInputMethodHint(this, QtopiaApplication::AlwaysOn);
+#endif
 
     setFocusPolicy(Qt::StrongFocus);
 
@@ -327,6 +327,26 @@ QSpectemu::~QSpectemu()
     }
 }
 
+QSpectemuMainWindow::QSpectemuMainWindow(QWidget *parent, Qt::WFlags f)
+        : QMainWindow(parent, f)
+{
+#ifdef QTOPIA
+    this->setWindowState(Qt::WindowMaximized);
+#else
+    resize(640, 480);
+#endif
+    Q_UNUSED(f);
+
+    normalScreenWidget = new QSpectemu(this);
+    setCentralWidget(qspectemu);
+    mainWin = this;
+}
+
+QSpectemuMainWindow::~QSpectemuMainWindow()
+{
+
+}
+
 void QSpectemu::showScreen(QSpectemu::Screen scr)
 {
     if(this == fullScreenWidget)
@@ -354,12 +374,15 @@ void QSpectemu::showScreen(QSpectemu::Screen scr)
     }
 
     bool enterFullScreen = fullScreen &&
-                           (scr == QSpectemu::ScreenProgRunning ||
-                            scr == QSpectemu::ScreenBindings);
+                           (scr == ScreenProgRunning ||
+                            scr == ScreenBindings);
 
     bool leaveFullScreen = fullScreen &&
-                           (screen == QSpectemu::ScreenProgRunning ||
-                            screen == QSpectemu::ScreenKeyboardPngBind);
+                           (screen == ScreenProgRunning ||
+                            screen == ScreenKeyboardPngBind);
+
+    bool enterQvga = qvga && (scr == ScreenProgRunning);
+    bool leaveQvga = qvga && (screen == ScreenProgRunning);
 
     if(enterFullScreen)
     {
@@ -367,37 +390,34 @@ void QSpectemu::showScreen(QSpectemu::Screen scr)
         qspectemu = fullScreenWidget;
         fullScreenWidget->screen = scr;
         fullScreenWidget->showInFullScreen();
-
-        if(qvga)
-        {
-            setRes(320240);
-        }
     }
     if(leaveFullScreen)
     {
         fullScreenWidget->hide();
         qspectemu = normalScreenWidget;
         normalScreenWidget->show();
-
-        if(qvga)
-        {
-            setRes(640480);
-        }
     }
-
-    if(scr == ScreenProgRunning)
+    if(enterQvga)
     {
-#if QTOPIA
-        if(virtKeyb)
-        {
-            QtopiaApplication::setInputMethodHint(qspectemu, QtopiaApplication::AlwaysOn);
-        }
-        else
-        {
-            QtopiaApplication::setInputMethodHint(qspectemu, QtopiaApplication::AlwaysOff);
-        }
-#endif
+        setRes(320240);
     }
+    if(leaveQvga)
+    {
+        setRes(640480);
+    }
+
+#if QTOPIA
+    if(scr == ScreenProgRunning && virtKeyb)
+    {
+        QtopiaApplication::setInputMethodHint(mainWin, QtopiaApplication::AlwaysOn);
+        QtopiaApplication::instance()->showInputMethod();
+    }
+    if(screen == ScreenProgRunning && virtKeyb)
+    {
+        QtopiaApplication::instance()->hideInputMethod();
+        QtopiaApplication::setInputMethodHint(mainWin, QtopiaApplication::AlwaysOff);
+    }
+#endif
     
     bBind->setVisible(scr == ScreenProgMenu);
     bKbd->setVisible(scr == ScreenProgMenu && screen == ScreenProgRunning);
@@ -1155,7 +1175,7 @@ void QSpectemu::backClicked()
     }
     else if(screen == ScreenProgList)
     {
-        close();
+        mainWin->close();
     }
     else if(screen == ScreenProgDownload)
     {
@@ -1331,7 +1351,7 @@ void spscr_toggle_fullscreen(void)
 
 #ifdef QTOPIA
 
-QTOPIA_ADD_APPLICATION(QTOPIA_TARGET,QSpectemu)
+QTOPIA_ADD_APPLICATION(QTOPIA_TARGET,QSpectemuMainWindow)
 QTOPIA_MAIN
 
 #else
@@ -1342,7 +1362,7 @@ QTOPIA_MAIN
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-    QSpectemu w;
+    QSpectemuMainWindow w;
     w.show();
     return a.exec();
 }
