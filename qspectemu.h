@@ -91,7 +91,6 @@ private:
     QCheckBox *chkQvga;
     QCheckBox *chkRotate;
     QCheckBox *chkFullScreen;
-    QCheckBox *chkVirtKeyb;
     QGridLayout *layout;
     bool isFullScreen(Screen scr);
     bool isQvga(Screen scr);

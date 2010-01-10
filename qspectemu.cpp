@@ -10,7 +10,6 @@ QImage scrR;                            // bitmap for rotated speccy screen
 bool rotated;                           // true for display rotated
 bool fullScreen;                        // true to play in fullscreen
 bool qvga;                              // true to display in qvga (320x240)
-bool virtKeyb;                          // true to display virtual keyboard
 QString url;                            // program url for download
 QTime counter;
 extern int endofsingle;
@@ -278,7 +277,6 @@ QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
     chkFullScreen = new QCheckBox(tr("Fullscreen"), this);
     chkRotate = new QCheckBox(tr("Rotate"), this);
     chkQvga = new QCheckBox(tr("Qvga (320x240)"), this);
-    chkVirtKeyb = new QCheckBox(tr("Virtual keyboard"), this);
 
     layout = new QGridLayout(this);
     layout->addWidget(label, 0, 0, 1, 2);
@@ -286,13 +284,12 @@ QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
     layout->addWidget(chkFullScreen, 2, 0);
     layout->addWidget(chkRotate, 3, 0);
     layout->addWidget(chkQvga, 4, 0);
-    layout->addWidget(chkVirtKeyb, 5, 0);
-    layout->addWidget(lw, 6, 0, 1, 2);
-    layout->addWidget(bBind, 7, 0);
-    layout->addWidget(bKbd, 7, 1);
-    layout->addWidget(bSnap, 8, 0);
-    layout->addWidget(bBack, 9, 0);
-    layout->addWidget(bOk, 9, 1);
+    layout->addWidget(lw, 5, 0, 1, 2);
+    layout->addWidget(bBind, 6, 0);
+    layout->addWidget(bKbd, 6, 1);
+    layout->addWidget(bSnap, 7, 0);
+    layout->addWidget(bBack, 8, 0);
+    layout->addWidget(bOk, 8, 1);
 
     kbpix.load(":/qspectkey.png");
 
@@ -379,14 +376,12 @@ void QSpectemu::showScreen(QSpectemu::Screen scr)
         chkRotate->setChecked(rotated);
         chkFullScreen->setChecked(fullScreen);
         chkQvga->setChecked(qvga);
-        chkVirtKeyb->setChecked(virtKeyb);
     }
     if(screen == ScreenProgMenu)
     {
         rotated = chkRotate->isChecked();
         fullScreen = chkFullScreen->isChecked();
         qvga = chkQvga->isChecked();
-        virtKeyb = chkVirtKeyb->isChecked();
     }
     
     bBind->setVisible(scr == ScreenProgMenu);
@@ -397,7 +392,6 @@ void QSpectemu::showScreen(QSpectemu::Screen scr)
     chkFullScreen->setVisible(scr == ScreenProgMenu);
     chkQvga->setVisible(scr == ScreenProgMenu);
     chkRotate->setVisible(scr == ScreenProgMenu);
-    chkVirtKeyb->setVisible(scr == ScreenProgMenu);
     lw->setVisible(scr == ScreenProgList);
     label->setVisible(scr == ScreenProgMenu || scr == ScreenProgDownload);
     if(scr == ScreenProgMenu)
@@ -434,12 +428,12 @@ void QSpectemu::showScreen(QSpectemu::Screen scr)
     }
 
 #if QTOPIA
-    if(virtKeyb && scr == ScreenProgRunning)
+    if(scr == ScreenProgRunning)
     {
         QtopiaApplication::setInputMethodHint(mainWin, QtopiaApplication::AlwaysOn);
         QtopiaApplication::instance()->showInputMethod();
     }
-    if(virtKeyb && screen == ScreenProgRunning)
+    if(screen == ScreenProgRunning)
     {
         QtopiaApplication::setInputMethodHint(mainWin, QtopiaApplication::AlwaysOff);
         QtopiaApplication::instance()->hideInputMethod();
@@ -840,9 +834,6 @@ void QSpectemu::loadCfg(QString prog)
         QString qvgaAttr = progElem.attribute("qvga");
         qvga = (qvgaAttr == "yes");
 
-        QString vkAttr = progElem.attribute("virtkeyboard");
-        virtKeyb = (vkAttr == "yes");
-
         url = progElem.attribute("url");
 
         QDomElement bindsElem = progElem.firstChildElement("binds");
@@ -916,7 +907,6 @@ void QSpectemu::saveCfg(QString prog)
     progElem.setAttribute("rotate", rotated ? "yes" : "no");
     progElem.setAttribute("fullscreen", fullScreen ? "yes" : "no");
     progElem.setAttribute("qvga", qvga ? "yes" : "no");
-    progElem.setAttribute("virtkeyboard", virtKeyb ? "yes" : "no");
 
     QDomElement bindsElem = progElem.firstChildElement("binds");
     if(bindsElem.isNull())
