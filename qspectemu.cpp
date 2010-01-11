@@ -92,7 +92,7 @@ oskey *firstFreeOskey()
     for(int i = 0; i < OSKEYS_SIZE; i++)
     {
         oskey *ki = &(oskeys[i]);
-        if(ki->x <= 0)
+        if(ki->key <= 0)
         {
             return ki;
         }
@@ -784,26 +784,28 @@ void QSpectemu::mouseReleaseEvent(QMouseEvent *e)
         for(int i = 0; i < OSKEYS_SIZE; i++)
         {
             oskey *ki = &(oskeys[i]);
-            if(ki->key > 0)
+            if(ki->key <= 0 || abs(x - ki->x) > 16 || abs(y - ki->y) > 16)
             {
-                if(abs(x - ki->x) < 16 && abs(y - ki->y) < 16)
-                {
-                    // Replace binding or assign one more key?
-                    QString key(QChar(ki->key));
-                    if(QMessageBox::question(this, "Bind key", tr("Add (YES) or replace (NO)") + " '" + key + "' ?",
-                                             QMessageBox::Yes | QMessageBox::No) == QMessageBox::No)
-                    {
-                        ki->key = 0;    // replace binding
-                    }
-                    x = ki->x;
-                    y = ki->y;
-                }
                 continue;
             }
-            ki->x = x;
-            ki->y = y;
-            break;
+            // Replace binding or assign one more key?
+            QString key(QChar(ki->key));
+            if(QMessageBox::question(this, "Bind key", tr("Add (YES) or replace (NO)") + " '" + key + "' ?",
+                                     QMessageBox::Yes | QMessageBox::No) == QMessageBox::No)
+            {
+                ki->key = 0;    // replace binding
+                x = 0;
+                y = 0;
+            }
+            else
+            {
+                x = ki->x;      // adjust x y to match existing bind
+                y = ki->y;
+            }
         }
+        oskey *ki = firstFreeOskey();
+        ki->x = x;
+        ki->y = y;
         update();
         QTimer::singleShot(500, this, SLOT(showScreenKeyboardPngBind()));
     }
