@@ -87,6 +87,19 @@ static struct oskey oskeyspng[] = {
 #define OSKEYS_SIZE (int)(sizeof(oskeys) / sizeof(oskey))
 #define OSKEYSPNG_SIZE (int)(sizeof(oskeyspng) / sizeof(oskey))
 
+oskey *firstFreeOskey()
+{
+    for(int i = 0; i < OSKEYS_SIZE; i++)
+    {
+        oskey *ki = &(oskeys[i]);
+        if(ki->x <= 0)
+        {
+            return ki;
+        }
+    }
+    return &(oskeys[OSKEYS_SIZE - 1]);
+}
+
 bool decodeKey(int key, int *ks, int *shks, int *ki)
 {
     *shks = 0;
@@ -736,6 +749,35 @@ void QSpectemu::mousePressEvent(QMouseEvent *e)
     }
     else if(screen == QSpectemu::ScreenBindings)
     {
+        oskey *ki = firstFreeOskey();
+        ki->x = e->x();
+        ki->y = e->y();
+        update();
+    }
+    else if(screen == QSpectemu::ScreenKeyboardPng)
+    {
+        sp_paused = 0;
+        pressKey(getKeyPng(e->x(), e->y()));
+        pngKeyDown = true;
+        showScreen(QSpectemu::ScreenProgRunning);
+    }
+    else if(screen == QSpectemu::ScreenKeyboardPngBind)
+    {
+        int key = getKeyPng(e->x(), e->y());
+        firstFreeOskey()->key = key;
+        showScreen(QSpectemu::ScreenProgMenu);
+    }
+}
+
+void QSpectemu::mouseReleaseEvent(QMouseEvent *e)
+{
+    if(screen == ScreenProgRunning)
+    {
+        pngKeyDown = false;
+        releaseAllKeys();
+    }
+    else if(screen == ScreenBindings)
+    {
         int x = e->x();
         int y = e->y();
 
@@ -765,37 +807,19 @@ void QSpectemu::mousePressEvent(QMouseEvent *e)
         update();
         QTimer::singleShot(500, this, SLOT(showScreenKeyboardPngBind()));
     }
-    else if(screen == QSpectemu::ScreenKeyboardPng)
-    {
-        sp_paused = 0;
-        pressKey(getKeyPng(e->x(), e->y()));
-        pngKeyDown = true;
-        showScreen(QSpectemu::ScreenProgRunning);
-    }
-    else if(screen == QSpectemu::ScreenKeyboardPngBind)
-    {
-        int key = getKeyPng(e->x(), e->y());
-        for(int i = 0; i < OSKEYS_SIZE; i++)
-        {
-            oskey *ki = &(oskeys[i]);
-            if(ki->key <= 0)
-            {
-                ki->key = key;
-                break;
-            }
-        }
-        showScreen(QSpectemu::ScreenProgMenu);
-    }
-}
-
-void QSpectemu::mouseReleaseEvent(QMouseEvent *)
-{
-    pngKeyDown = false;
-    releaseAllKeys();
 }
 
 void QSpectemu::mouseMoveEvent(QMouseEvent *e)
 {
+    if(screen == ScreenBindings)
+    {
+        oskey *ki = firstFreeOskey();
+        ki->x = e->x();
+        ki->y = e->y();
+        update();
+        return;
+    }
+
     if(pngKeyDown)
     {
         return;     // ingore mouse moves while png key is pressed
