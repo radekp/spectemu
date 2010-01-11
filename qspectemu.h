@@ -83,6 +83,7 @@ private:
     int pressedKeyY;
     bool abort;
     bool pngKeyDown;                 // true if key from png keyboard is down
+    int showScreenProgMenuCancel;
     QListWidget *lw;
     QPushButton *bOk;
     QPushButton *bBack;
@@ -111,7 +112,7 @@ private slots:
     void bindClicked();
     void kbdClicked();
     void snapClicked();
-    void showScreenKeyboardPngBind();
+    void showScreenProgMenu();
     void releaseKeysLaterImpl();
 
 protected:

@@ -36,6 +36,7 @@ static struct oskey oskeys[] = {
     {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0},
     {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0},
     {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0},
+    {0, 0, 0},  // <- this one is used for setting new bind
 };
 
 // On screen coordinates for spectkey.png
@@ -84,7 +85,7 @@ static struct oskey oskeyspng[] = {
     {Qt::Key_F2, 330, 28},
 };
 
-#define OSKEYS_SIZE (int)(sizeof(oskeys) / sizeof(oskey))
+#define OSKEYS_SIZE (int)(sizeof(oskeys) / sizeof(oskey) - 1)
 #define OSKEYSPNG_SIZE (int)(sizeof(oskeyspng) / sizeof(oskey))
 
 oskey *firstFreeOskey()
@@ -485,9 +486,16 @@ void QSpectemu::showScreen(QSpectemu::Screen scr)
     update();
 }
 
-void QSpectemu::showScreenKeyboardPngBind()
+void QSpectemu::showScreenProgMenu()
 {
-    showScreen(QSpectemu::ScreenKeyboardPngBind);
+    if(showScreenProgMenuCancel > 0)
+    {
+        showScreenProgMenuCancel--;
+    }
+    else
+    {
+        showScreen(QSpectemu::ScreenProgMenu);
+    }
 }
 
 void QSpectemu::showInFullScreen()
@@ -649,20 +657,52 @@ void QSpectemu::paintEvent(QPaintEvent *)
         break;
         case QSpectemu::ScreenBindings:
         {
-            for(int i = 0; i < OSKEYS_SIZE; i++)
+            for(int i = 0; i <= OSKEYS_SIZE; i++)
             {
                 oskey *ki = &(oskeys[i]);
-                if(ki->x <= 0)
+                if(ki->key <= 0 && i < OSKEYS_SIZE)
                 {
                     continue;
                 }
-                QRect rect(ki->x - 16, ki->y - 16, 32, 32);
-                QString key(QChar(ki->key));
+                QString text(QChar(ki->key));
+                if(ki->key == Qt::Key_F1)
+                {
+                    text = tr("show keyboard");
+                }
+                else if(ki->key == Qt::Key_F2)
+                {
+                    text = tr("prog menu");
+                }
+                if(i == OSKEYS_SIZE && ki->x == width() / 2 && ki->y == height() / 2)
+                {
+                    if(ki->key > 0)
+                    {
+                        text = tr("drag me to place key") + " '" + text + "'";
+                    }
+                    else
+                    {
+                        text = tr("drag me to key to be removed");
+                    }
+                }
+                else if(ki->key <= 0)
+                {
+                    text = "><";
+                }
+                QRect rect = p.boundingRect(QRect(0, 0, 32, 32), 0, text);
+                int dx = ki->x - rect.width() / 2;
+                int dy = ki->y - rect.height() / 2;
+                rect.adjust(dx - 2, dy - 2, dx + 2, dy + 2);
                 p.fillRect(rect, QColor(64, 64, 64, 64));
                 p.setPen(QColor(255, 255, 255, 255));
-                p.drawText(rect, key, QTextOption(Qt::AlignCenter));
+                p.drawText(rect, text, QTextOption(Qt::AlignCenter));
+                p.drawRect(rect);
+                if(ki->key <= 0)
+                {
+                    p.setPen(QColor(255, 0, 0, 255));
+                    p.drawLine(rect.topLeft(), rect.bottomRight());
+                    p.drawLine(rect.topRight(), rect.bottomLeft());
+                }
             }
-            p.drawText(this->rect(), tr("Click screen to place key"), QTextOption(Qt::AlignCenter));
         }
         break;
         default:
@@ -749,9 +789,9 @@ void QSpectemu::mousePressEvent(QMouseEvent *e)
     }
     else if(screen == QSpectemu::ScreenBindings)
     {
-        oskey *ki = firstFreeOskey();
-        ki->x = e->x();
-        ki->y = e->y();
+        oskeys[OSKEYS_SIZE].x = e->x();
+        oskeys[OSKEYS_SIZE].y = e->y();
+        showScreenProgMenuCancel++;         // second press cancels show prog and place more locations
         update();
     }
     else if(screen == QSpectemu::ScreenKeyboardPng)
@@ -761,12 +801,6 @@ void QSpectemu::mousePressEvent(QMouseEvent *e)
         pngKeyDown = true;
         showScreen(QSpectemu::ScreenProgRunning);
     }
-    else if(screen == QSpectemu::ScreenKeyboardPngBind)
-    {
-        int key = getKeyPng(e->x(), e->y());
-        firstFreeOskey()->key = key;
-        showScreen(QSpectemu::ScreenProgMenu);
-    }
 }
 
 void QSpectemu::mouseReleaseEvent(QMouseEvent *e)
@@ -775,6 +809,14 @@ void QSpectemu::mouseReleaseEvent(QMouseEvent *e)
     {
         pngKeyDown = false;
         releaseAllKeys();
+    }
+    else if(screen == QSpectemu::ScreenKeyboardPngBind)
+    {
+        oskeys[OSKEYS_SIZE].key = getKeyPng(e->x(), e->y());
+        oskeys[OSKEYS_SIZE].x = width() / 2;
+        oskeys[OSKEYS_SIZE].y = height() / 2;
+        showScreenProgMenuCancel = -1;
+        showScreen(QSpectemu::ScreenBindings);
     }
     else if(screen == ScreenBindings)
     {
@@ -789,25 +831,25 @@ void QSpectemu::mouseReleaseEvent(QMouseEvent *e)
                 continue;
             }
             // Replace binding or assign one more key?
-            QString key(QChar(ki->key));
-            if(QMessageBox::question(this, "Bind key", tr("Add (YES) or replace (NO)") + " '" + key + "' ?",
-                                     QMessageBox::Yes | QMessageBox::No) == QMessageBox::No)
-            {
-                ki->key = 0;    // replace binding
-                x = 0;
-                y = 0;
-            }
-            else
+            if(oskeys[OSKEYS_SIZE].key > 0 && QMessageBox::question
+               (this, tr("Question"), tr("Add key?"),
+                QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes)
             {
                 x = ki->x;      // adjust x y to match existing bind
                 y = ki->y;
             }
+            else
+            {
+                ki->key = ki->x = ki->y = 0;    // replace/delete binding
+            }
         }
         oskey *ki = firstFreeOskey();
+        ki->key = oskeys[OSKEYS_SIZE].key;
         ki->x = x;
         ki->y = y;
+
         update();
-        QTimer::singleShot(500, this, SLOT(showScreenKeyboardPngBind()));
+        QTimer::singleShot(2000, this, SLOT(showScreenProgMenu()));
     }
 }
 
@@ -815,10 +857,13 @@ void QSpectemu::mouseMoveEvent(QMouseEvent *e)
 {
     if(screen == ScreenBindings)
     {
-        oskey *ki = firstFreeOskey();
-        ki->x = e->x();
-        ki->y = e->y();
+        oskeys[OSKEYS_SIZE].x = e->x();
+        oskeys[OSKEYS_SIZE].y = e->y();
         update();
+        return;
+    }
+    else if(screen != ScreenProgRunning)
+    {
         return;
     }
 
@@ -1293,7 +1338,7 @@ void QSpectemu::backClicked()
 
 void QSpectemu::bindClicked()
 {
-    showScreen(QSpectemu::ScreenBindings);
+    showScreen(QSpectemu::ScreenKeyboardPngBind);
 }
 
 void QSpectemu::kbdClicked()
