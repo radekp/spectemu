@@ -451,7 +451,7 @@ void QSpectemu::showScreen(QSpectemu::Screen scr)
     }
 
 #if QTOPIA
-    if(scr == ScreenProgRunning)
+    if(scr == ScreenProgRunning && !qvga)
     {
         QApplication::processEvents();
         QtopiaApplication::setInputMethodHint(normalScreenWidget, QtopiaApplication::AlwaysOn);
