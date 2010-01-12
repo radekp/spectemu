@@ -687,7 +687,7 @@ int QSpectemu::getKeyPng(int x, int y)
     return -1;
 }
 
-void QSpectemu::paintEvent(QPaintEvent *)
+void QSpectemu::paintEvent(QPaintEvent *e)
 {
     QPainter p(this);
     switch(screen)
@@ -749,28 +749,19 @@ void QSpectemu::paintEvent(QPaintEvent *)
             // Draw areas for good press locations
             QColor red(255, 0, 0, 255);
             p.setPen(red);
-            for(int y = 0; y < height(); y += 8)
+            QRect rect = e->rect();
+            for(int y = rect.top() - (rect.top() %  2); y <= rect.bottom(); y += 2)
             {
-                for(int x = 0; x < width(); x += 8)
+                int step = 1;
+                for(int x = rect.left(); x <= rect.right(); x += step)
                 {
                     bool good;
                     int dist;
                     findOsKey(x, y, &good, &dist);
-                    if(dist > 72 * 72)
+                    step = (dist > 64 * 64 ? 8 : (dist > 32 * 32 ? 4 : 1));
+                    if(!good)
                     {
-                        p.fillRect(x, y, 8, 8, red);
-                        continue;
-                    }
-                    for(int yy = y; yy < y + 8; yy++)
-                    {
-                        for(int xx = x; xx < x + 8; xx++)
-                        {
-                            findOsKey(xx, yy, &good, &dist);
-                            if(good)
-                            {
-                                p.drawLine(xx, yy, xx, yy);
-                            }
-                        }
+                        p.drawLine(x, y, x + step, y);
                     }
                 }
             }
@@ -815,12 +806,6 @@ void QSpectemu::paintEvent(QPaintEvent *)
                 p.setPen(QColor(255, 255, 255, 255));
                 p.drawText(rect, text, QTextOption(Qt::AlignCenter));
                 p.drawRect(rect);
-                if(ki->key <= 0)
-                {
-                    p.setPen(red);
-                    p.drawLine(rect.topLeft(), rect.bottomRight());
-                    p.drawLine(rect.topRight(), rect.bottomLeft());
-                }
             }
         }
         break;
@@ -883,9 +868,6 @@ void QSpectemu::mousePressEvent(QMouseEvent *e)
         pressedKeyX = min->x;
         pressedKeyY = min->y;
 
-        // Press all keys in this distance (can be more then one key)
-        pressKeysAt(pressedKeyX, pressedKeyY);
-
         // Auto correct bind if this was good press or vibrate to signal that
         // something between keys was pressed
         if(good)
@@ -907,8 +889,11 @@ void QSpectemu::mousePressEvent(QMouseEvent *e)
         }
         else
         {
-            vibrate(255);
+            vibrate(192);
         }
+
+        // Press all keys in this distance (can be more then one key)
+        pressKeysAt(pressedKeyX, pressedKeyY);
     }
     else if(screen == QSpectemu::ScreenBindings)
     {
@@ -973,7 +958,7 @@ void QSpectemu::mouseReleaseEvent(QMouseEvent *e)
         ki->y = y;
 
         update();
-        QTimer::singleShot(2000, this, SLOT(showScreenProgMenu()));
+        QTimer::singleShot(1000, this, SLOT(showScreenProgMenu()));
     }
 }
 
@@ -981,9 +966,13 @@ void QSpectemu::mouseMoveEvent(QMouseEvent *e)
 {
     if(screen == ScreenBindings)
     {
-        oskeys[OSKEYS_SIZE].x = e->x();
-        oskeys[OSKEYS_SIZE].y = e->y();
-        update();
+        int x = e->x();
+        int y = e->y();
+        int w = abs(x - oskeys[OSKEYS_SIZE].x);
+        int h = abs(y - oskeys[OSKEYS_SIZE].y);
+        oskeys[OSKEYS_SIZE].x = x;
+        oskeys[OSKEYS_SIZE].y = y;
+        update(QRect(x - 72 - w, y - 72 - h, 144 + 2 * w, 144 + 2 * h));
         return;
     }
     else if(screen != ScreenProgRunning)
