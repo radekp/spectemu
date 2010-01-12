@@ -14,6 +14,69 @@ QString url;                            // program url for download
 QTime counter;
 extern int endofsingle;
 
+#ifdef QTOPIA
+static bool setres(const char *sysfsPath, const char *sysfsVal, const char *fbsetMode)
+{
+    QFile f(sysfsPath);
+    if(!f.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate))
+    {
+        return false;
+    }
+    QProcess p;
+    p.start("fbset", QStringList(fbsetMode));
+    p.waitForFinished(5000);
+    f.write(sysfsVal);
+    f.close();
+    return true;
+}
+#endif
+
+bool QSpectemu::setRes(int xy)
+{
+#ifdef QTOPIA
+    if(xy == 320240)
+    {
+        return setres("/sys/bus/spi/devices/spi2.0/state", "qvga-normal", "qvga") ||
+                setres("/sys/bus/spi/devices/spi2.0/resolution", "qvga", "qvga");
+    }
+    if(xy == 640480)
+    {
+        return setres("/sys/bus/spi/devices/spi2.0/state", "normal", "vga") ||
+                setres("/sys/bus/spi/devices/spi2.0/resolution", "vga", "vga");
+    }
+    return false;
+#else
+    Q_UNUSED(xy);
+    return true;
+#endif
+}
+
+static int lastVibroLevel = 0;
+
+static void vibrate(int level)
+{
+    if(level == lastVibroLevel)
+    {
+        return;
+    }
+
+    QFile f("/sys/class/leds/neo1973:vibrator/brightness");
+    if(!f.open(QIODevice::WriteOnly))
+    {
+        return;
+    }
+    char buf[255];
+    sprintf(buf, "%d", level);
+    f.write(buf);
+    f.close();
+    lastVibroLevel = level;
+}
+
+static void stopVibrating()
+{
+    vibrate(0);
+}
+
 // On screen key info
 struct oskey {
     int key;
@@ -186,6 +249,7 @@ static void pressKey(int key)
     if(ks < 0)
     {
         sp_paused = 1;
+        stopVibrating();
         if(key == Qt::Key_F1)
         {
             qspectemu->showScreen(QSpectemu::ScreenKeyboardPng);
@@ -308,7 +372,7 @@ static oskey *findOsKey(int x, int y, bool *good, int *distance)
             min = ki;
         }
     }
-    *good = (minDist * 3 < minDist2 * 2) || minDist > 64 * 64;
+    *good = (minDist * 7 < minDist2 * 2) || minDist > 64 * 64;
     *distance = minDist;
     return min;
 }
@@ -583,68 +647,6 @@ bool QSpectemu::event(QEvent *event)
     return QWidget::event(event);
 }
 
-#ifdef QTOPIA
-static bool setres(const char *sysfsPath, const char *sysfsVal, const char *fbsetMode)
-{
-    QFile f(sysfsPath);
-    if(!f.open(QIODevice::WriteOnly | QIODevice::Text | QIODevice::Truncate))
-    {
-        return false;
-    }
-    QProcess p;
-    p.start("fbset", QStringList(fbsetMode));
-    p.waitForFinished(5000);
-    f.write(sysfsVal);
-    f.close();
-    return true;
-}
-#endif
-
-bool QSpectemu::setRes(int xy)
-{
-#ifdef QTOPIA
-    if(xy == 320240)
-    {
-        return setres("/sys/bus/spi/devices/spi2.0/state", "qvga-normal", "qvga") ||
-                setres("/sys/bus/spi/devices/spi2.0/resolution", "qvga", "qvga");
-    }
-    if(xy == 640480)
-    {
-        return setres("/sys/bus/spi/devices/spi2.0/state", "normal", "vga") ||
-                setres("/sys/bus/spi/devices/spi2.0/resolution", "vga", "vga");
-    }
-    return false;
-#else
-    Q_UNUSED(xy);
-    return true;
-#endif
-}
-
-static int lastVibroLevel = 0;
-
-static void vibrate(int level)
-{
-    if(level == lastVibroLevel)
-    {
-        return;
-    }
-
-    QFile f("/sys/class/leds/neo1973:vibrator/brightness");
-    if(!f.open(QIODevice::WriteOnly))
-    {
-        return;
-    }
-    char buf[255];
-    sprintf(buf, "%d", level);
-    f.write(buf);
-    f.close();
-    lastVibroLevel = level;
-}
-
-static void stopVibrating()
-{
-    vibrate(0);
-}
 
 int QSpectemu::getKeyPng(int x, int y)
 {
@@ -873,7 +875,7 @@ void QSpectemu::mousePressEvent(QMouseEvent *e)
         // Vibrate if pressed something between
         if(!good)
         {
-            vibrate(192);
+            vibrate(255);
         }
     }
     else if(screen == QSpectemu::ScreenBindings)
@@ -973,7 +975,7 @@ void QSpectemu::mouseMoveEvent(QMouseEvent *e)
     }
     else
     {
-        vibrate(192);
+        vibrate(255);
     }
 
     if(pressedKeyX == min->x && pressedKeyY == min->y)
@@ -1398,6 +1400,7 @@ void QSpectemu::backClicked()
     }
     else if(screen == ScreenProgList)
     {
+        stopVibrating();
         mainWin->close();
     }
     else if(screen == ScreenProgDownload)
