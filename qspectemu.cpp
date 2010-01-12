@@ -210,6 +210,23 @@ static void pressKey(int key)
     process_keys();
 }
 
+// Press all keys which have binds at exact x and y
+static void pressKeysAt(int x, int y)
+{
+    for(int i = 0; i < OSKEYS_SIZE; i++)
+    {
+        oskey *ki = &(oskeys[i]);
+        if(ki->key <= 0)
+        {
+            continue;
+        }
+        if(ki->x == x && ki->y == y)
+        {
+            pressKey(ki->key);
+        }
+    }
+}
+
 static void releaseKey(int key)
 {
     int ks, shks, ki;
@@ -261,6 +278,39 @@ static void releaseAllKeys()
 
     spkb_state_changed = 1;
     process_keys();
+}
+
+// Find nearest on screen key for given x and y. Returns also if the key press
+// location is good (no other key which can collide is near).
+static oskey *findOsKey(int x, int y, bool *good, int *distance)
+{
+    // Find nearest and second nearest distance
+    int minDist = 0x7fffffff;
+    int minDist2 = 0x7fffffff;
+    oskey *min = oskeys;
+    for(int i = 0; i <= OSKEYS_SIZE; i++)
+    {
+        oskey *ki = &(oskeys[i]);
+        if(ki->key <= 0)
+        {
+            continue;
+        }
+        int dx = x - ki->x;
+        int dy = y - ki->y;
+        int dist = dx * dx + dy * dy;
+        if(dist < minDist)
+        {
+            if(ki->key != min->key)
+            {
+                minDist2 = minDist;     // dont count second dist for same keys
+            }
+            minDist = dist;
+            min = ki;
+        }
+    }
+    *good = (minDist * 3 < minDist2 * 2) || minDist > 64 * 64;
+    *distance = minDist;
+    return min;
 }
 
 static void showErr(QWidget *parent, QString err)
@@ -570,28 +620,30 @@ bool QSpectemu::setRes(int xy)
 #endif
 }
 
-static void writeVibro(int val)
+static int lastVibroLevel = 0;
+
+static void vibrate(int level)
 {
+    if(level == lastVibroLevel)
+    {
+        return;
+    }
+
     QFile f("/sys/class/leds/neo1973:vibrator/brightness");
     if(!f.open(QIODevice::WriteOnly))
     {
         return;
     }
     char buf[255];
-    sprintf(buf, "%d", val);
+    sprintf(buf, "%d", level);
     f.write(buf);
     f.close();
+    lastVibroLevel = level;
 }
 
-void QSpectemu::stopVibrating()
+static void stopVibrating()
 {
-    writeVibro(0);
-}
-
-void QSpectemu::vibrate(int level)
-{
-    writeVibro(level);
-    QTimer::singleShot(5, this, SLOT(stopVibrating()));
+    vibrate(0);
 }
 
 int QSpectemu::getKeyPng(int x, int y)
@@ -680,6 +732,36 @@ void QSpectemu::paintEvent(QPaintEvent *)
         break;
         case QSpectemu::ScreenBindings:
         {
+            // Draw areas for good press locations
+            QColor red(255, 0, 0, 255);
+            p.setPen(red);
+            for(int y = 0; y < height(); y += 8)
+            {
+                for(int x = 0; x < width(); x += 8)
+                {
+                    bool good;
+                    int dist;
+                    findOsKey(x, y, &good, &dist);
+                    if(dist > 72 * 72)
+                    {
+                        p.fillRect(x, y, 8, 8, red);
+                        continue;
+                    }
+                    for(int yy = y; yy < y + 8; yy++)
+                    {
+                        for(int xx = x; xx < x + 8; xx++)
+                        {
+                            findOsKey(xx, yy, &good, &dist);
+                            if(good)
+                            {
+                                p.drawLine(xx, yy, xx, yy);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Draw binds
             for(int i = 0; i <= OSKEYS_SIZE; i++)
             {
                 oskey *ki = &(oskeys[i]);
@@ -721,7 +803,7 @@ void QSpectemu::paintEvent(QPaintEvent *)
                 p.drawRect(rect);
                 if(ki->key <= 0)
                 {
-                    p.setPen(QColor(255, 0, 0, 255));
+                    p.setPen(red);
                     p.drawLine(rect.topLeft(), rect.bottomRight());
                     p.drawLine(rect.topRight(), rect.bottomLeft());
                 }
@@ -779,44 +861,17 @@ void QSpectemu::mousePressEvent(QMouseEvent *e)
     if(screen == QSpectemu::ScreenProgRunning)
     {
         // Find nearest distance
-        int x = e->x();
-        int y = e->y();
-        int minDist = 0x7fffffff;
-        int minDist2 = 0x7fffffff;
-        int minKey = 0;
-        for(int i = 0; i < OSKEYS_SIZE; i++)
-        {
-            oskey *ki = &(oskeys[i]);
-            if(ki->key <= 0)
-            {
-                continue;
-            }
-            int dist = abs(x - ki->x) + abs(y - ki->y);
-            if(dist < minDist)
-            {
-                if(ki->key != minKey)
-                {
-                    minDist2 = minDist;     // dont count dist for same keys
-                }
-                minDist = dist;
-                pressedKeyX = ki->x;
-                pressedKeyY = ki->y;
-            }
-        }
-        for(int i = 0; i < OSKEYS_SIZE; i++)
-        {
-            oskey *ki = &(oskeys[i]);
-            if(ki->key <= 0)
-            {
-                continue;
-            }
-            if(ki->x == pressedKeyX && ki->y == pressedKeyY)
-            {
-                pressKey(ki->key);
-            }
-        }
-        //printf("minDist=%d minDist2=%d\n", minDist, minDist2);
-        if(minDist2 - minDist > 64 || minDist2 / minDist >= 2)
+        bool good;
+        int dist;
+        oskey *min = findOsKey(e->x(), e->y(), &good, &dist);
+        pressedKeyX = min->x;
+        pressedKeyY = min->y;
+
+        // Press all keys in this distance (can be more then one key)
+        pressKeysAt(pressedKeyX, pressedKeyY);
+
+        // Vibrate if pressed something between
+        if(!good)
         {
             vibrate(192);
         }
@@ -841,6 +896,7 @@ void QSpectemu::mouseReleaseEvent(QMouseEvent *e)
 {
     if(screen == ScreenProgRunning)
     {
+        stopVibrating();
         pngKeyDown = false;
         releaseAllKeys();
     }
@@ -906,50 +962,30 @@ void QSpectemu::mouseMoveEvent(QMouseEvent *e)
         return;     // ingore mouse moves while png key is pressed
     }
 
-    int x = e->x();
-    int y = e->y();
-
     // Check if we moved to another key
-    int minDist = 0x7fffffff;
-    int newPressedX = 0;
-    int newPressedY = 0;
-    for(int i = 0; i < OSKEYS_SIZE; i++)
+    bool good;
+    int dist;
+    oskey *min = findOsKey(e->x(), e->y(), &good, &dist);
+
+    if(good)
     {
-        oskey *ki = &(oskeys[i]);
-        if(ki->key <= 0)
-        {
-            continue;
-        }
-        int dist = abs(x - ki->x) + abs(y - ki->y);
-        if(dist < minDist)
-        {
-            minDist = dist;
-            newPressedX = ki->x;
-            newPressedY = ki->y;
-        }
+        stopVibrating();
+    }
+    else
+    {
+        vibrate(192);
     }
 
-    if(newPressedX == pressedKeyX && newPressedY == pressedKeyY)
+    if(pressedKeyX == min->x && pressedKeyY == min->y)
     {
         return;
     }
-    pressedKeyX = newPressedX;
-    pressedKeyY = newPressedY;
+    pressedKeyX = min->x;
+    pressedKeyY = min->y;
 
     // Release old pressed keys and press new
     releaseAllKeys();
-    for(int i = 0; i < OSKEYS_SIZE; i++)
-    {
-        oskey *ki = &(oskeys[i]);
-        if(ki->key <= 0)
-        {
-            continue;
-        }
-        if(ki->x == newPressedX && ki->y == newPressedY)
-        {
-            pressKey(ki->key);
-        }
-    }
+    pressKeysAt(pressedKeyX, pressedKeyY);
 }
 
 // Load global cfg (progFile==NULL) or cfg for given program

@@ -82,7 +82,7 @@ private:
     int pressedKeyX;                // x and y of pressed on screen key
     int pressedKeyY;
     bool abort;
-    bool pngKeyDown;                 // true if key from png keyboard is down
+    bool pngKeyDown;                // true if key from png keyboard is down
     int showScreenProgMenuCancel;
     QListWidget *lw;
     QPushButton *bOk;
@@ -105,7 +105,6 @@ private:
     void showInFullScreen();
     bool download(QString url, QString destPath, QString filename);
     void setProgramFullPath();
-    void vibrate(int level);
 
 private slots:
     void okClicked();
@@ -115,7 +114,6 @@ private slots:
     void snapClicked();
     void showScreenProgMenu();
     void releaseKeysLaterImpl();
-    void stopVibrating();
 
 protected:
     bool event(QEvent *);
