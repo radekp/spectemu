@@ -10,6 +10,8 @@ QImage scrR;                            // bitmap for rotated speccy screen
 bool rotated;                           // true for display rotated
 bool fullScreen;                        // true to play in fullscreen
 bool qvga;                              // true to display in qvga (320x240)
+bool vibrateEnabled;                    // true to vibrate if on screen key is not pressed good
+bool autocorrectBinds;                  // true makes on screen keys move where they were pressed most often
 QString url;                            // program url for download
 QTime counter;
 extern int endofsingle;
@@ -55,7 +57,7 @@ static int lastVibroLevel = 0;
 
 static void vibrate(int level)
 {
-    if(level == lastVibroLevel)
+    if(!vibrateEnabled || level == lastVibroLevel)
     {
         return;
     }
@@ -428,13 +430,17 @@ QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
     chkFullScreen = new QCheckBox(tr("Fullscreen"), this);
     chkRotate = new QCheckBox(tr("Rotate"), this);
     chkQvga = new QCheckBox(tr("Qvga (320x240)"), this);
+    chkVibro = new QCheckBox(tr("Vibrate"), this);
+    chkAutocorrect = new QCheckBox(tr("Autocorrect binds"), this);
 
     layout = new QGridLayout(this);
     layout->addWidget(label, 0, 0, 1, 2);
     layout->addWidget(progress, 1, 0, 1, 2);
     layout->addWidget(chkFullScreen, 2, 0);
-    layout->addWidget(chkRotate, 3, 0);
-    layout->addWidget(chkQvga, 4, 0);
+    layout->addWidget(chkRotate, 2, 1);
+    layout->addWidget(chkQvga, 3, 0);
+    layout->addWidget(chkVibro, 3, 1);
+    layout->addWidget(chkAutocorrect, 4, 0);
     layout->addWidget(lw, 5, 0, 1, 2);
     layout->addWidget(bBind, 6, 0);
     layout->addWidget(bKbd, 6, 1);
@@ -527,12 +533,16 @@ void QSpectemu::showScreen(QSpectemu::Screen scr)
         chkRotate->setChecked(rotated);
         chkFullScreen->setChecked(fullScreen);
         chkQvga->setChecked(qvga);
+        chkVibro->setChecked(vibrateEnabled);
+        chkAutocorrect->setChecked(autocorrectBinds);
     }
     if(screen == ScreenProgMenu)
     {
         rotated = chkRotate->isChecked();
         fullScreen = chkFullScreen->isChecked();
         qvga = chkQvga->isChecked();
+        vibrateEnabled = chkVibro->isChecked();
+        autocorrectBinds = chkAutocorrect->isChecked();
     }
     
     bBind->setVisible(scr == ScreenProgMenu);
@@ -543,6 +553,8 @@ void QSpectemu::showScreen(QSpectemu::Screen scr)
     chkFullScreen->setVisible(scr == ScreenProgMenu);
     chkQvga->setVisible(scr == ScreenProgMenu);
     chkRotate->setVisible(scr == ScreenProgMenu);
+    chkVibro->setVisible(scr == ScreenProgMenu);
+    chkAutocorrect->setVisible(scr == ScreenProgMenu);
     lw->setVisible(scr == ScreenProgList);
     label->setVisible(scr == ScreenProgMenu || scr == ScreenProgDownload);
     if(scr == ScreenProgMenu)
@@ -865,15 +877,35 @@ void QSpectemu::mousePressEvent(QMouseEvent *e)
         // Find nearest distance
         bool good;
         int dist;
-        oskey *min = findOsKey(e->x(), e->y(), &good, &dist);
+        int x = e->x();
+        int y = e->y();
+        oskey *min = findOsKey(x, y, &good, &dist);
         pressedKeyX = min->x;
         pressedKeyY = min->y;
 
         // Press all keys in this distance (can be more then one key)
         pressKeysAt(pressedKeyX, pressedKeyY);
 
-        // Vibrate if pressed something between
-        if(!good)
+        // Auto correct bind if this was good press or vibrate to signal that
+        // something between keys was pressed
+        if(good)
+        {
+            if(autocorrectBinds)
+            {
+                int dx = (x > pressedKeyX ? 1 : -1);
+                int dy = (y > pressedKeyY ? 1 : -1);
+                for(int i = 0; i < OSKEYS_SIZE; i++)
+                {
+                    oskey *ki = &(oskeys[i]);
+                    if(ki->x == pressedKeyX && ki->y == pressedKeyY)
+                    {
+                        ki->x += dx;
+                        ki->y += dy;
+                    }
+                }
+            }
+        }
+        else
         {
             vibrate(255);
         }
@@ -1053,6 +1085,12 @@ void QSpectemu::loadCfg(QString prog)
         QString qvgaAttr = progElem.attribute("qvga");
         qvga = (qvgaAttr == "yes");
 
+        QString vibroAttr = progElem.attribute("vibrate");
+        vibrateEnabled = (vibroAttr == "yes");
+
+        QString autocorrectAttr = progElem.attribute("autocorrectBinds");
+        autocorrectBinds = (autocorrectAttr == "yes");
+
         url = progElem.attribute("url");
 
         QDomElement bindsElem = progElem.firstChildElement("binds");
@@ -1126,6 +1164,8 @@ void QSpectemu::saveCfg(QString prog)
     progElem.setAttribute("rotate", rotated ? "yes" : "no");
     progElem.setAttribute("fullscreen", fullScreen ? "yes" : "no");
     progElem.setAttribute("qvga", qvga ? "yes" : "no");
+    progElem.setAttribute("vibrate", vibrateEnabled ? "yes" : "no");
+    progElem.setAttribute("autocorrectBinds", autocorrectBinds ? "yes" : "no");
 
     QDomElement bindsElem = progElem.firstChildElement("binds");
     if(bindsElem.isNull())
