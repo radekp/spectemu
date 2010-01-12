@@ -570,6 +570,29 @@ bool QSpectemu::setRes(int xy)
 #endif
 }
 
+static void writeVibro(int val)
+{
+    QFile f("/sys/class/leds/neo1973:vibrator/brightness");
+    if(!f.open(QIODevice::WriteOnly))
+    {
+        return;
+    }
+    char buf[255];
+    sprintf(buf, "%d", val);
+    f.write(buf);
+    f.close();
+}
+
+void QSpectemu::stopVibrating()
+{
+    writeVibro(0);
+}
+
+void QSpectemu::vibrate(int level)
+{
+    writeVibro(level);
+    QTimer::singleShot(5, this, SLOT(stopVibrating()));
+}
 
 int QSpectemu::getKeyPng(int x, int y)
 {
@@ -759,6 +782,8 @@ void QSpectemu::mousePressEvent(QMouseEvent *e)
         int x = e->x();
         int y = e->y();
         int minDist = 0x7fffffff;
+        int minDist2 = 0x7fffffff;
+        int minKey = 0;
         for(int i = 0; i < OSKEYS_SIZE; i++)
         {
             oskey *ki = &(oskeys[i]);
@@ -769,6 +794,10 @@ void QSpectemu::mousePressEvent(QMouseEvent *e)
             int dist = abs(x - ki->x) + abs(y - ki->y);
             if(dist < minDist)
             {
+                if(ki->key != minKey)
+                {
+                    minDist2 = minDist;     // dont count dist for same keys
+                }
                 minDist = dist;
                 pressedKeyX = ki->x;
                 pressedKeyY = ki->y;
@@ -785,6 +814,11 @@ void QSpectemu::mousePressEvent(QMouseEvent *e)
             {
                 pressKey(ki->key);
             }
+        }
+        //printf("minDist=%d minDist2=%d\n", minDist, minDist2);
+        if(minDist2 - minDist > 64 || minDist2 / minDist >= 2)
+        {
+            vibrate(192);
         }
     }
     else if(screen == QSpectemu::ScreenBindings)

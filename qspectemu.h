@@ -105,6 +105,7 @@ private:
     void showInFullScreen();
     bool download(QString url, QString destPath, QString filename);
     void setProgramFullPath();
+    void vibrate(int level);
 
 private slots:
     void okClicked();
@@ -114,6 +115,7 @@ private slots:
     void snapClicked();
     void showScreenProgMenu();
     void releaseKeysLaterImpl();
+    void stopVibrating();
 
 protected:
     bool event(QEvent *);
