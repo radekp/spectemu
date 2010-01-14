@@ -83,6 +83,7 @@ private:
     int pressedKeyY;
     bool abort;
     bool pngKeyDown;                // true if key from png keyboard is down
+    bool paintKeyLocations;         // paint will also show on screen key locations
     int showScreenProgMenuCancel;
     QListWidget *lw;
     QPushButton *bOk;

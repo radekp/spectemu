@@ -519,6 +519,8 @@ bool QSpectemu::isQvga(QSpectemu::Screen scr)
 
 void QSpectemu::showScreen(QSpectemu::Screen scr)
 {
+    paintKeyLocations = (scr == ScreenBindings);
+
     if(this == fullScreenWidget)
     {
         normalScreenWidget->showScreen(scr);
@@ -690,6 +692,8 @@ int QSpectemu::getKeyPng(int x, int y)
 void QSpectemu::paintEvent(QPaintEvent *e)
 {
     QPainter p(this);
+    QRect rect = e->rect();
+
     switch(screen)
     {
         case QSpectemu::ScreenProgRunning:
@@ -698,6 +702,7 @@ void QSpectemu::paintEvent(QPaintEvent *e)
             {
                 return;
             }
+
             //p.setCompositionMode(QPainter::CompositionMode_Source);
             if(rotated)
             {
@@ -715,11 +720,11 @@ void QSpectemu::paintEvent(QPaintEvent *e)
                         r -= TV_HEIGHT;
                     }
                 }
-                p.drawImage(0, 0, scrR);
+                p.drawImage(rect, scrR, rect);
             }
             else
             {
-                p.drawImage(0, 0, scr);
+                p.drawImage(rect, scr, rect);
             }
         }
         break;
@@ -746,73 +751,91 @@ void QSpectemu::paintEvent(QPaintEvent *e)
         break;
         case QSpectemu::ScreenBindings:
         {
-            // Draw areas for good press locations
-            QColor red(255, 0, 0, 255);
-            p.setPen(red);
-            QRect rect = e->rect();
-            for(int y = rect.top() - (rect.top() %  2); y <= rect.bottom(); y += 2)
-            {
-                int step = 1;
-                for(int x = rect.left(); x <= rect.right(); x += step)
-                {
-                    bool good;
-                    int dist;
-                    findOsKey(x, y, &good, &dist);
-                    step = (dist > 64 * 64 ? 8 : (dist > 32 * 32 ? 4 : 1));
-                    if(!good)
-                    {
-                        p.drawLine(x, y, x + step, y);
-                    }
-                }
-            }
-
-            // Draw binds
-            for(int i = 0; i <= OSKEYS_SIZE; i++)
-            {
-                oskey *ki = &(oskeys[i]);
-                if(ki->key <= 0 && i < OSKEYS_SIZE)
-                {
-                    continue;
-                }
-                QString text(QChar(ki->key));
-                if(ki->key == Qt::Key_F1)
-                {
-                    text = tr("show keyboard");
-                }
-                else if(ki->key == Qt::Key_F2)
-                {
-                    text = tr("prog menu");
-                }
-                if(i == OSKEYS_SIZE && ki->x == width() / 2 && ki->y == height() / 2)
-                {
-                    if(ki->key > 0)
-                    {
-                        text = tr("drag me to place key") + " '" + text + "'";
-                    }
-                    else
-                    {
-                        text = tr("drag me to key to be removed");
-                    }
-                }
-                else if(ki->key <= 0)
-                {
-                    text = "><";
-                }
-                QRect rect = p.boundingRect(QRect(0, 0, 32, 32), 0, text);
-                int dx = ki->x - rect.width() / 2;
-                int dy = ki->y - rect.height() / 2;
-                rect.adjust(dx - 2, dy - 2, dx + 2, dy + 2);
-                p.fillRect(rect, QColor(64, 64, 64, 64));
-                p.setPen(QColor(255, 255, 255, 255));
-                p.drawText(rect, text, QTextOption(Qt::AlignCenter));
-                p.drawRect(rect);
-            }
+            paintKeyLocations = true;
         }
         break;
         default:
         {
         }
         break;
+    }
+
+    if(paintKeyLocations)
+    {
+        // Draw areas for good press locations
+        QColor red(255, 0, 0, 255);
+        p.setPen(red);
+        int q = (qvga && screen == ScreenProgRunning ? 2 : 1);
+        for(int y = rect.top() - (rect.top() %  2); y <= rect.bottom(); y += 2)
+        {
+            int step = 1;
+            for(int x = rect.left(); x <= rect.right(); x += step)
+            {
+                bool good;
+                int dist;
+                findOsKey(x * q, y * q, &good, &dist);
+                step = (dist > 64 * 64 ? 8 : (dist > 32 * 32 ? 4 : 1));
+                if(!good)
+                {
+                    p.drawLine(x, y, x + step, y);
+                }
+            }
+        }
+
+        // Draw binds
+        if(q == 2)
+        {
+            p.scale(0.5, 0.5);
+        }
+        for(int i = 0; i <= OSKEYS_SIZE; i++)
+        {
+            oskey *ki = &(oskeys[i]);
+            if(ki->key <= 0 && i < OSKEYS_SIZE)
+            {
+                continue;
+            }
+            QString text(QChar(ki->key));
+            if(ki->key == Qt::Key_F1)
+            {
+                text = tr("show keyboard");
+            }
+            else if(ki->key == Qt::Key_F2)
+            {
+                text = tr("prog menu");
+            }
+            if(i == OSKEYS_SIZE && ki->x == width() / 2 && ki->y == height() / 2)
+            {
+                if(ki->key > 0)
+                {
+                    text = tr("drag me to place key") + " '" + text + "'";
+                }
+                else
+                {
+                    text = tr("drag me to key to be removed");
+                }
+            }
+            else if(ki->key <= 0)
+            {
+                text = "><";
+            }
+            QRect r = p.boundingRect(QRect(0, 0, 32, 32), 0, text);
+            r.moveTo(-r.width() /2, -r.height() / 2);
+            int tx = ki->x;
+            int ty = ki->y;
+            p.translate(tx, ty);
+            if(rotated)
+            {
+                p.rotate(-90);
+            }
+            p.fillRect(r, QColor(255, 0, 0, 255));
+            p.setPen(QColor(255, 255, 255, 255));
+            p.drawText(r, text, QTextOption(Qt::AlignCenter));
+            if(rotated)
+            {
+                p.rotate(90);
+            }
+            p.translate(-tx, -ty);
+        }
     }
 }
 
@@ -886,10 +909,17 @@ void QSpectemu::mousePressEvent(QMouseEvent *e)
                     }
                 }
             }
+            if(paintKeyLocations)
+            {
+                paintKeyLocations = false;
+                update();
+            }
         }
         else
         {
             vibrate(192);
+            paintKeyLocations = true;
+            update();
         }
 
         // Press all keys in this distance (can be more then one key)
@@ -994,10 +1024,15 @@ void QSpectemu::mouseMoveEvent(QMouseEvent *e)
     {
         stopVibrating();
     }
-    else
-    {
-        vibrate(255);
-    }
+//    else
+//    {
+//        vibrate(255);
+//        if(!paintKeyLocations)
+//        {
+//            paintKeyLocations = true;
+//            update();
+//        }
+//    }
 
     if(pressedKeyX == min->x && pressedKeyY == min->y)
     {
@@ -1572,11 +1607,11 @@ void update_screen(void)
 
     if(rotated)
     {
-        qspectemu->update(top, X_OFF, bottom + 1, WIDTH);
+        qspectemu->update(top, X_OFF, bottom - top + 1, WIDTH);
     }
     else
     {
-        qspectemu->update(X_OFF, top, WIDTH, bottom + 1);
+        qspectemu->update(X_OFF, top, WIDTH, bottom - top + 1);
     }
 }
 
