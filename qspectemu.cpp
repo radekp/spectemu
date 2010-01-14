@@ -662,7 +662,7 @@ bool QSpectemu::event(QEvent *event)
 }
 
 
-int QSpectemu::getKeyPng(int x, int y)
+int QSpectemu::getKeyPng(int x, int y, bool nearest)
 {
 //    // Small screen - pressed bottom part of keyboard?
 //    if(kbpix.width() > width() && y > kbpix.height())
@@ -678,13 +678,23 @@ int QSpectemu::getKeyPng(int x, int y)
         x = nx;
     }
 
+    int minDist = 0x7fffffff;
+    int key = Qt::Key_F2;
     for(int i = 0; i < OSKEYSPNG_SIZE; i++)
     {
         oskey *ki = &(oskeyspng[i]);
-        if(abs(x - ki->x) < 32 && abs(y - ki->y) < 32)
+        int dx = x - ki->x;
+        int dy = y - ki->y;
+        int dst = dx * dx + dy * dy;
+        if(dst < minDist)
         {
-            return ki->key;
+            minDist = dst;
+            key = ki->key;
         }
+    }
+    if(nearest || minDist < 32 * 32)
+    {
+        return key;
     }
     return -1;
 }
@@ -797,11 +807,11 @@ void QSpectemu::paintEvent(QPaintEvent *e)
             QString text(QChar(ki->key));
             if(ki->key == Qt::Key_F1)
             {
-                text = tr("show keyboard");
+                text = tr("keyboard");
             }
             else if(ki->key == Qt::Key_F2)
             {
-                text = tr("prog menu");
+                text = tr("menu");
             }
             if(i == OSKEYS_SIZE && ki->x == width() / 2 && ki->y == height() / 2)
             {
@@ -935,7 +945,7 @@ void QSpectemu::mousePressEvent(QMouseEvent *e)
     else if(screen == QSpectemu::ScreenKeyboardPng)
     {
         sp_paused = 0;
-        pressKey(getKeyPng(e->x(), e->y()));
+        pressKey(getKeyPng(e->x(), e->y(), true));
         pngKeyDown = true;
         showScreen(QSpectemu::ScreenProgRunning);
     }
@@ -951,7 +961,7 @@ void QSpectemu::mouseReleaseEvent(QMouseEvent *e)
     }
     else if(screen == QSpectemu::ScreenKeyboardPngBind)
     {
-        oskeys[OSKEYS_SIZE].key = getKeyPng(e->x(), e->y());
+        oskeys[OSKEYS_SIZE].key = getKeyPng(e->x(), e->y(), false);
         oskeys[OSKEYS_SIZE].x = width() / 2;
         oskeys[OSKEYS_SIZE].y = height() / 2;
         showScreenProgMenuCancel = -1;

@@ -101,7 +101,7 @@ private:
     QGridLayout *layout;
     bool isFullScreen(Screen scr);
     bool isQvga(Screen scr);
-    int getKeyPng(int x, int y);
+    int getKeyPng(int x, int y, bool nearest);
     void loadCfg(QString prog);
     void saveCfg(QString prog);
     void saveCurrentProgCfg();
