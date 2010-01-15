@@ -780,7 +780,7 @@ void QSpectemu::paintEvent(QPaintEvent *e)
         case QSpectemu::ScreenKeyboardPng:
         case QSpectemu::ScreenKeyboardPngBind:
         {
-            QPixmap pix = (qvga ? kbpix320 : kbpix);
+            QPixmap pix = (qvga && screen == ScreenKeyboardPng ? kbpix320 : kbpix);
             if(height() > width())
             {
                 if(height() < kbpix.width())
