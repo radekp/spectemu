@@ -79,6 +79,7 @@ private:
     QString currentProgFullPath;
     Screen screen;
     QPixmap kbpix;
+    QPixmap kbpix320;
     int pressedKeyX;                // x and y of pressed on screen key
     int pressedKeyY;
     bool abort;

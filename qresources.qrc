@@ -2,5 +2,6 @@
     <qresource prefix="/">
         <file>qspectkey.png</file>
         <file>qspectemu.xml</file>
+        <file>qspectkey320.png</file>
     </qresource>
 </RCC>

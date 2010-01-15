@@ -179,10 +179,12 @@ static QString keyToStr(int key)
         return QApplication::tr("keyboard");
     case Qt::Key_F2:
         return QApplication::tr("menu");
-    case 0:
-        return "><";
     default:
-        return QChar(key);
+        if(key > 0)
+        {
+            return QChar(key);
+        }
+        return "><";
     }
 }
 
@@ -377,10 +379,14 @@ static oskey *findOsKey(int x, int y, bool *good, int *distance)
     for(int i = 0; i <= OSKEYS_SIZE; i++)
     {
         oskey *ki = &(oskeys[i]);
-        if(ki->key <= 0 && oskeys[OSKEYS_SIZE].key > 0)
+        if(ki->key <= 0)
         {
             i = OSKEYS_SIZE;
             ki = &(oskeys[OSKEYS_SIZE]);
+            if(ki->key <= 0)
+            {
+                break;
+            }
         }
         int dx = x - ki->x;
         int dy = y - ki->y;
@@ -420,6 +426,7 @@ QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
     {
         fullScreenWidget = this;
         kbpix = normalScreenWidget->kbpix;
+        kbpix320 = normalScreenWidget->kbpix320;
         return;
     }
 
@@ -470,6 +477,7 @@ QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
     layout->addWidget(bOk, 8, 1);
 
     kbpix.load(":/qspectkey.png");
+    kbpix320.load(":/qspectkey320.png");
 
     //setAttribute(Qt::WA_NoSystemBackground);
 
@@ -694,9 +702,19 @@ int QSpectemu::getKeyPng(int x, int y, bool nearest)
 
     if(height() > width())
     {
+        if(kbpix.width() > height())
+        {
+            x *= 2;
+            y *= 2;
+        }
         int nx = kbpix.width() - y;
         y = x;
         x = nx;
+    }
+    else if(kbpix.width() > width())
+    {
+        x *= 2;
+        y *= 2;
     }
 
     int minDist = 0x7fffffff;
@@ -760,20 +778,23 @@ void QSpectemu::paintEvent(QPaintEvent *e)
         }
         break;
         case QSpectemu::ScreenKeyboardPng:
-        {
-            if(qvga)
-            {
-                p.scale(0.5, 0.5);
-            }
-        }
         case QSpectemu::ScreenKeyboardPngBind:
         {
+            QPixmap pix = (qvga ? kbpix320 : kbpix);
             if(height() > width())
             {
+                if(height() < kbpix.width())
+                {
+                    pix = kbpix320;
+                }
                 p.rotate(-90);
-                p.translate(-kbpix.width(), 0);
+                p.translate(-pix.width(), 0);
             }
-            p.drawPixmap(0, 0, kbpix);
+            else if(width() < kbpix.width())
+            {
+                pix = kbpix320;
+            }
+            p.drawPixmap(0, 0, pix);
 //            if(kbpix.width() > width())
 //            {
 //                p.drawPixmap(width() - kbpix.width(), kbpix.height(), kbpix);
@@ -819,7 +840,8 @@ void QSpectemu::paintEvent(QPaintEvent *e)
             p.scale(0.5, 0.5);
         }
         QString text;
-        for(int i = 0; i <= OSKEYS_SIZE; i++)
+        int max = (screen == ScreenProgRunning ? OSKEYS_SIZE - 1: OSKEYS_SIZE);
+        for(int i = 0; i <= max; i++)
         {
             oskey *ki = &(oskeys[i]);
             if(ki->key <= 0 && i < OSKEYS_SIZE)
@@ -921,6 +943,9 @@ void QSpectemu::mousePressEvent(QMouseEvent *e)
         pressedKeyX = min->x;
         pressedKeyY = min->y;
 
+        // Press all keys in this distance (can be more then one key)
+        pressKeysAt(pressedKeyX, pressedKeyY);
+
         // Auto correct bind if this was good press or vibrate to signal that
         // something between keys was pressed
         if(good)
@@ -951,9 +976,6 @@ void QSpectemu::mousePressEvent(QMouseEvent *e)
             paintKeyLocations = true;
             update();
         }
-
-        // Press all keys in this distance (can be more then one key)
-        pressKeysAt(pressedKeyX, pressedKeyY);
     }
     else if(screen == QSpectemu::ScreenBindings)
     {
@@ -1002,7 +1024,7 @@ void QSpectemu::mouseReleaseEvent(QMouseEvent *e)
                 continue;
             }
             // Replace binding or assign one more key?
-            if(oskeys[OSKEYS_SIZE].key > 0 && QMessageBox::question
+            if(oskeys[OSKEYS_SIZE].key < 0 || QMessageBox::question
                (this, tr("Question"), tr("Replace key") + " " + keyToStr(ki->key) + "?",
                 QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes)
             {
