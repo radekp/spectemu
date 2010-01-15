@@ -1071,6 +1071,9 @@ void QSpectemu::loadCfg(QString prog)
     {
         dir.mkpath(dir.path());
     }
+    dir.setFilter(QDir::Files);
+    QFileInfoList dirList = dir.entryInfoList();
+    
     QFile f(dir.filePath("qspectemu.xml"));
     if(!f.exists())
     {
@@ -1100,6 +1103,17 @@ void QSpectemu::loadCfg(QString prog)
         QString file = progElem.attribute("file");
         if(list)
         {
+            // Program is in xml so remove it from the dir list
+            for(int i = 0; i < dirList.size(); i++) {
+                QString filename = dirList.at(i).fileName();
+                if(filename.compare(file, Qt::CaseInsensitive) == 0)
+                {
+                    dirList.removeAt(i);
+                    break;
+                }
+            }
+
+            // Add item to listview
             QListWidgetItem *item = new QListWidgetItem(file, lw, QListWidgetItem::UserType);
             lw->addItem(item);
             continue;
@@ -1149,6 +1163,18 @@ void QSpectemu::loadCfg(QString prog)
     }
     if(list)
     {
+        // Add files that are not in xml
+        for(int i = 0; i < dirList.size(); i++) {
+            QString filename = dirList.at(i).fileName();
+            if(filename.endsWith(".SNA", Qt::CaseInsensitive) ||
+               filename.endsWith(".Z80", Qt::CaseInsensitive))
+            {
+                QListWidgetItem *item = new QListWidgetItem(filename, lw, QListWidgetItem::UserType);
+                lw->addItem(item);
+                saveCfg(filename);      // inefficient like hell, but works ;-)
+            }
+        }
+
         lw->setCurrentRow(0);
     }
     f.close();
