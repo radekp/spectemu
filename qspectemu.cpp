@@ -153,17 +153,37 @@ static struct oskey oskeyspng[] = {
 #define OSKEYS_SIZE (int)(sizeof(oskeys) / sizeof(oskey) - 1)
 #define OSKEYSPNG_SIZE (int)(sizeof(oskeyspng) / sizeof(oskey))
 
-oskey *firstFreeOskey()
+// Sort keys by x and y and also remove holes
+static void sortOsKeys()
 {
-    for(int i = 0; i < OSKEYS_SIZE; i++)
+    oskey tmp;
+    for(int i = 0; i < OSKEYS_SIZE; )
     {
-        oskey *ki = &(oskeys[i]);
-        if(ki->key <= 0)
+        oskey *k = &(oskeys[i]);
+        oskey *l = &(oskeys[++i]);
+        if(l->key > 0 && (k->key <= 0 || (l->x < k->x || (l->x == k->x && l->y < k->y))))
         {
-            return ki;
+            memcpy(&tmp, l, sizeof(oskey));
+            memcpy(l, k, sizeof(oskey));
+            memcpy(k, &tmp, sizeof(oskey));
+            i = 0;
         }
     }
-    return &(oskeys[OSKEYS_SIZE - 1]);
+}
+
+static QString keyToStr(int key)
+{
+    switch(key)
+    {
+    case Qt::Key_F1:
+        return QApplication::tr("keyboard");
+    case Qt::Key_F2:
+        return QApplication::tr("menu");
+    case 0:
+        return "><";
+    default:
+        return QChar(key);
+    }
 }
 
 bool decodeKey(int key, int *ks, int *shks, int *ki)
@@ -357,9 +377,10 @@ static oskey *findOsKey(int x, int y, bool *good, int *distance)
     for(int i = 0; i <= OSKEYS_SIZE; i++)
     {
         oskey *ki = &(oskeys[i]);
-        if(ki->key <= 0)
+        if(ki->key <= 0 && oskeys[OSKEYS_SIZE].key > 0)
         {
-            continue;
+            i = OSKEYS_SIZE;
+            ki = &(oskeys[OSKEYS_SIZE]);
         }
         int dx = x - ki->x;
         int dy = y - ki->y;
@@ -519,8 +540,6 @@ bool QSpectemu::isQvga(QSpectemu::Screen scr)
 
 void QSpectemu::showScreen(QSpectemu::Screen scr)
 {
-    paintKeyLocations = (scr == ScreenBindings);
-
     if(this == fullScreenWidget)
     {
         normalScreenWidget->showScreen(scr);
@@ -609,6 +628,8 @@ void QSpectemu::showScreen(QSpectemu::Screen scr)
         QtopiaApplication::instance()->hideInputMethod();
     }
 #endif
+
+    qspectemu->paintKeyLocations = (scr == ScreenBindings || scr == ScreenProgRunning);
 
     this->screen = scr;
     update();
@@ -797,6 +818,7 @@ void QSpectemu::paintEvent(QPaintEvent *e)
         {
             p.scale(0.5, 0.5);
         }
+        QString text;
         for(int i = 0; i <= OSKEYS_SIZE; i++)
         {
             oskey *ki = &(oskeys[i]);
@@ -804,30 +826,27 @@ void QSpectemu::paintEvent(QPaintEvent *e)
             {
                 continue;
             }
-            QString text(QChar(ki->key));
-            if(ki->key == Qt::Key_F1)
-            {
-                text = tr("keyboard");
-            }
-            else if(ki->key == Qt::Key_F2)
-            {
-                text = tr("menu");
-            }
             if(i == OSKEYS_SIZE && ki->x == width() / 2 && ki->y == height() / 2)
             {
                 if(ki->key > 0)
                 {
-                    text = tr("drag me to place key") + " '" + text + "'";
+                    text = tr("drag me to place key") + " '" + keyToStr(ki->key) + "'";
                 }
                 else
                 {
                     text = tr("drag me to key to be removed");
                 }
             }
-            else if(ki->key <= 0)
+            else
             {
-                text = "><";
+                text += keyToStr(ki->key);
             }
+            if(i < OSKEYS_SIZE && ki->x == oskeys[i + 1].x && ki->y == oskeys[i + 1].y)
+            {
+                text += "+";
+                continue;
+            }
+
             QRect r = p.boundingRect(QRect(0, 0, 32, 32), 0, text);
             r.moveTo(-r.width() /2, -r.height() / 2);
             int tx = ki->x;
@@ -845,6 +864,7 @@ void QSpectemu::paintEvent(QPaintEvent *e)
                 p.rotate(90);
             }
             p.translate(-tx, -ty);
+            text = "";
         }
     }
 }
@@ -969,33 +989,32 @@ void QSpectemu::mouseReleaseEvent(QMouseEvent *e)
     }
     else if(screen == ScreenBindings)
     {
-        int x = e->x();
-        int y = e->y();
+        int x = oskeys[OSKEYS_SIZE].x = e->x();
+        int y = oskeys[OSKEYS_SIZE].y = e->y();
 
         for(int i = 0; i < OSKEYS_SIZE; i++)
         {
             oskey *ki = &(oskeys[i]);
-            if(ki->key <= 0 || abs(x - ki->x) > 16 || abs(y - ki->y) > 16)
+            int dx = x - ki->x;
+            int dy = y - ki->y;
+            if(ki->key <= 0 || dx * dx + dy * dy > 16 * 16)
             {
                 continue;
             }
             // Replace binding or assign one more key?
             if(oskeys[OSKEYS_SIZE].key > 0 && QMessageBox::question
-               (this, tr("Question"), tr("Add key?"),
+               (this, tr("Question"), tr("Replace key") + " " + keyToStr(ki->key) + "?",
                 QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes)
-            {
-                x = ki->x;      // adjust x y to match existing bind
-                y = ki->y;
-            }
-            else
             {
                 ki->key = ki->x = ki->y = 0;    // replace/delete binding
             }
+            else
+            {
+                ki->x = x;      // adjust x y to match exactly
+                ki->y = y;      // and add binding
+            }
         }
-        oskey *ki = firstFreeOskey();
-        ki->key = oskeys[OSKEYS_SIZE].key;
-        ki->x = x;
-        ki->y = y;
+        sortOsKeys();
 
         update();
         QTimer::singleShot(1000, this, SLOT(showScreenProgMenu()));
@@ -1176,6 +1195,10 @@ void QSpectemu::loadCfg(QString prog)
         }
 
         lw->setCurrentRow(0);
+    }
+    else
+    {
+        sortOsKeys();
     }
     f.close();
 }
