@@ -10,7 +10,7 @@ QImage scrR;                            // bitmap for rotated speccy screen
 bool rotated;                           // true for display rotated
 bool fullScreen;                        // true to play in fullscreen
 bool qvga;                              // true to display in qvga (320x240)
-bool vibrateEnabled;                    // true to vibrate if on screen key is not pressed good
+bool feedback;                          // true to vibrate if on screen key is not pressed good
 bool autocorrectBinds;                  // true makes on screen keys move where they were pressed most often
 QString url;                            // program url for download
 QTime counter;
@@ -57,7 +57,7 @@ static int lastVibroLevel = 0;
 
 static void vibrate(int level)
 {
-    if(!vibrateEnabled || level == lastVibroLevel)
+    if(!feedback || level == lastVibroLevel)
     {
         return;
     }
@@ -458,7 +458,7 @@ QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
     chkFullScreen = new QCheckBox(tr("Fullscreen"), this);
     chkRotate = new QCheckBox(tr("Rotate"), this);
     chkQvga = new QCheckBox(tr("Qvga (320x240)"), this);
-    chkVibro = new QCheckBox(tr("Vibrate"), this);
+    chkFeedback = new QCheckBox(tr("Feedback"), this);
     chkAutocorrect = new QCheckBox(tr("Autocorrect binds"), this);
 
     layout = new QGridLayout(this);
@@ -467,7 +467,7 @@ QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
     layout->addWidget(chkFullScreen, 2, 0);
     layout->addWidget(chkRotate, 2, 1);
     layout->addWidget(chkQvga, 3, 0);
-    layout->addWidget(chkVibro, 3, 1);
+    layout->addWidget(chkFeedback, 3, 1);
     layout->addWidget(chkAutocorrect, 4, 0);
     layout->addWidget(lw, 5, 0, 1, 2);
     layout->addWidget(bBind, 6, 0);
@@ -562,7 +562,7 @@ void QSpectemu::showScreen(QSpectemu::Screen scr)
         chkRotate->setChecked(rotated);
         chkFullScreen->setChecked(fullScreen);
         chkQvga->setChecked(qvga);
-        chkVibro->setChecked(vibrateEnabled);
+        chkFeedback->setChecked(feedback);
         chkAutocorrect->setChecked(autocorrectBinds);
     }
     if(screen == ScreenProgMenu)
@@ -570,7 +570,7 @@ void QSpectemu::showScreen(QSpectemu::Screen scr)
         rotated = chkRotate->isChecked();
         fullScreen = chkFullScreen->isChecked();
         qvga = chkQvga->isChecked();
-        vibrateEnabled = chkVibro->isChecked();
+        feedback = chkFeedback->isChecked();
         autocorrectBinds = chkAutocorrect->isChecked();
     }
     
@@ -582,7 +582,7 @@ void QSpectemu::showScreen(QSpectemu::Screen scr)
     chkFullScreen->setVisible(scr == ScreenProgMenu);
     chkQvga->setVisible(scr == ScreenProgMenu);
     chkRotate->setVisible(scr == ScreenProgMenu);
-    chkVibro->setVisible(scr == ScreenProgMenu);
+    chkFeedback->setVisible(scr == ScreenProgMenu);
     chkAutocorrect->setVisible(scr == ScreenProgMenu);
     lw->setVisible(scr == ScreenProgList);
     label->setVisible(scr == ScreenProgMenu || scr == ScreenProgDownload);
@@ -970,7 +970,7 @@ void QSpectemu::mousePressEvent(QMouseEvent *e)
                 update();
             }
         }
-        else
+        else if(feedback)
         {
             vibrate(192);
             paintKeyLocations = true;
@@ -1174,8 +1174,8 @@ void QSpectemu::loadCfg(QString prog)
         QString qvgaAttr = progElem.attribute("qvga");
         qvga = (qvgaAttr == "yes");
 
-        QString vibroAttr = progElem.attribute("vibrate");
-        vibrateEnabled = (vibroAttr == "yes");
+        QString vibroAttr = progElem.attribute("feedback");
+        feedback = (vibroAttr == "yes");
 
         QString autocorrectAttr = progElem.attribute("autocorrectBinds");
         autocorrectBinds = (autocorrectAttr == "yes");
@@ -1269,7 +1269,7 @@ void QSpectemu::saveCfg(QString prog)
     progElem.setAttribute("rotate", rotated ? "yes" : "no");
     progElem.setAttribute("fullscreen", fullScreen ? "yes" : "no");
     progElem.setAttribute("qvga", qvga ? "yes" : "no");
-    progElem.setAttribute("vibrate", vibrateEnabled ? "yes" : "no");
+    progElem.setAttribute("feedback", feedback ? "yes" : "no");
     progElem.setAttribute("autocorrectBinds", autocorrectBinds ? "yes" : "no");
 
     QDomElement bindsElem = progElem.firstChildElement("binds");
