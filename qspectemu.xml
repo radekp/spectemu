@@ -1,47 +1,39 @@
 <qspectemu>
- <prog fullscreen="no" file="BASIC.Z80" rotate="no" qvga="no" >
-  <binds>
-   <bind x="32" y="32" key="16777265" />
-  </binds>
- </prog>
- <prog fullscreen="no" file="BOULDASH.Z80" rotate="no" qvga="no" url="http://activationrecord.net/radekp/qspectemu/progs/BOULDASH.Z80" >
-  <binds>
-   <bind x="32" y="32" key="16777265" />
-  </binds>
- </prog>
- <prog fullscreen="no" file="DANDARE3.Z80" rotate="no" qvga="no" url="http://activationrecord.net/radekp/qspectemu/progs/DANDARE3.Z80" >
-  <binds>
-   <bind x="32" y="32" key="16777265" />
-  </binds>
- </prog>
- <prog fullscreen="no" file="DEFCROWN.Z80" rotate="no" qvga="no" url="http://activationrecord.net/radekp/qspectemu/progs/DEFCROWN.Z80" >
-  <binds>
-   <bind x="32" y="32" key="16777265" />
-  </binds>
- </prog>
- <prog fullscreen="no" file="ELITE.Z80" rotate="no" qvga="no" url="http://activationrecord.net/radekp/qspectemu/progs/ELITE.Z80" >
-  <binds>
-   <bind x="32" y="32" key="16777265" />
-  </binds>
- </prog>
- <prog fullscreen="no" file="EXOLON.Z80" rotate="no" qvga="no" url="http://activationrecord.net/radekp/qspectemu/progs/EXOLON.Z80" >
-  <binds>
-   <bind x="32" y="32" key="16777265" />
-  </binds>
- </prog>
- <prog fullscreen="no" file="MANIC.Z80" rotate="no" qvga="no" url="http://activationrecord.net/radekp/qspectemu/progs/MANIC.Z80" >
-  <binds>
-   <bind x="32" y="32" key="16777265" />
-  </binds>
- </prog>
- <prog fullscreen="no" file="NETHEREA.Z80" rotate="no" qvga="no" url="http://activationrecord.net/radekp/qspectemu/progs/NETHEREA.Z80" >
-  <binds>
-   <bind x="32" y="32" key="16777265" />
-  </binds>
- </prog>
- <prog fullscreen="no" file="SABOTEUR.Z80" rotate="no" qvga="no" url="http://activationrecord.net/radekp/qspectemu/progs/SABOTEUR.Z80" >
-  <binds>
-   <bind x="32" y="32" key="16777265" />
-  </binds>
- </prog>
+<prog file="BASIC.Z80" ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
+<prog file="BATTY.Z80"    url="http://activationrecord.net/radekp/qspectemu/progs/BATTY.Z80"    ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
+<prog file="BOULDASH.Z80" url="http://activationrecord.net/radekp/qspectemu/progs/BOULDASH.Z80" ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
+<prog file="CYCLONE.Z80"  url="http://activationrecord.net/radekp/qspectemu/progs/CYCLONE.Z80"  ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
+<prog file="DANDARE3.Z80" url="http://activationrecord.net/radekp/qspectemu/progs/DANDARE3.Z80" ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
+<prog file="DARKSIDE.Z80" url="http://activationrecord.net/radekp/qspectemu/progs/DARKSIDE.Z80" ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
+<prog file="DECATHLN.Z80" url="http://activationrecord.net/radekp/qspectemu/progs/DECATHLN.Z80" ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
+<prog file="DEFCROWN.Z80" url="http://activationrecord.net/radekp/qspectemu/progs/DEFCROWN.Z80" ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
+<prog file="DEFLEKTO.Z80" url="http://activationrecord.net/radekp/qspectemu/progs/DEFLEKTO.Z80" ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
+<prog file="ELITE.Z80"    url="http://activationrecord.net/radekp/qspectemu/progs/ELITE.Z80"    ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
+<prog file="EXOLON.Z80"   url="http://activationrecord.net/radekp/qspectemu/progs/EXOLON.Z80"   ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
+<prog file="FAIR1.Z80"    url="http://activationrecord.net/radekp/qspectemu/progs/FAIR1.Z80"    ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
+<prog file="FIST1.Z80"    url="http://activationrecord.net/radekp/qspectemu/progs/FIST1.Z80"    ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
+<prog file="FIST2-1P.Z80" url="http://activationrecord.net/radekp/qspectemu/progs/FIST2-1P.Z80" ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
+<prog file="FMBASKET.Z80" url="http://activationrecord.net/radekp/qspectemu/progs/FMBASKET.Z80" ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
+<prog file="GREATESC.Z80" url="http://activationrecord.net/radekp/qspectemu/progs/GREATESC.Z80" ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
+<prog file="HARRIER.Z80"  url="http://activationrecord.net/radekp/qspectemu/progs/HARRIER.Z80"  ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
+<prog file="IKARATEA.Z80" url="http://activationrecord.net/radekp/qspectemu/progs/IKARATEA.Z80" ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
+<prog file="KDSCMNGR.Z80" url="http://activationrecord.net/radekp/qspectemu/progs/KDSCMNGR.Z80" ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
+<prog file="LEADEBOA.Z80" url="http://activationrecord.net/radekp/qspectemu/progs/LEADEBOA.Z80" ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
+<prog file="LORDSOCH.Z80" url="http://activationrecord.net/radekp/qspectemu/progs/LORDSOCH.Z80" ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
+<prog file="MANIC.Z80"    url="http://activationrecord.net/radekp/qspectemu/progs/MANIC.Z80"    ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
+<prog file="NAVYMOV1.Z80" url="http://activationrecord.net/radekp/qspectemu/progs/NAVYMOV1.Z80" ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
+<prog file="NAVYMOV2.Z80" url="http://activationrecord.net/radekp/qspectemu/progs/NAVYMOV2.Z80" ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
+<prog file="NETHEREA.Z80" url="http://activationrecord.net/radekp/qspectemu/progs/NETHEREA.Z80" ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
+<prog file="PINBALLP.Z80" url="http://activationrecord.net/radekp/qspectemu/progs/PINBALLP.Z80" ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
+<prog file="POOL3D.Z80"   url="http://activationrecord.net/radekp/qspectemu/progs/POOL3D.Z80"   ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
+<prog file="RENEGADE.Z80" url="http://activationrecord.net/radekp/qspectemu/progs/RENEGADE.Z80" ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
+<prog file="RICKDAN1.Z80" url="http://activationrecord.net/radekp/qspectemu/progs/RICKDAN1.Z80" ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
+<prog file="SABOTEUR.Z80" url="http://activationrecord.net/radekp/qspectemu/progs/SABOTEUR.Z80" ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
+<prog file="SABOTEU2.Z80" url="http://activationrecord.net/radekp/qspectemu/progs/SABOTEU2.Z80" ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
+<prog file="SENTINEL.Z80" url="http://activationrecord.net/radekp/qspectemu/progs/SENTINEL.Z80" ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
+<prog file="SIMCITY.Z80"  url="http://activationrecord.net/radekp/qspectemu/progs/SIMCITY.Z80"  ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
+<prog file="SPACRAID.Z80" url="http://activationrecord.net/radekp/qspectemu/progs/SPACRAID.Z80" ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
+<prog file="TARGREN2.Z80" url="http://activationrecord.net/radekp/qspectemu/progs/TARGREN2.Z80" ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
+<prog file="TETRIS48.Z80" url="http://activationrecord.net/radekp/qspectemu/progs/TETRIS48.Z80" ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
+<prog file="3WEEKS.Z80"   url="http://activationrecord.net/radekp/qspectemu/progs/3WEEKS.Z80"   ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
 </qspectemu>
