@@ -19,6 +19,7 @@
 <prog file="IKARATEA.Z80" url="http://activationrecord.net/radekp/qspectemu/progs/IKARATEA.Z80" ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
 <prog file="KDSCMNGR.Z80" url="http://activationrecord.net/radekp/qspectemu/progs/KDSCMNGR.Z80" ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
 <prog file="LEADEBOA.Z80" url="http://activationrecord.net/radekp/qspectemu/progs/LEADEBOA.Z80" ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
+<prog file="LORDSMID.Z80" url="http://activationrecord.net/radekp/qspectemu/progs/LORDSOCH.Z80" ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
 <prog file="LORDSOCH.Z80" url="http://activationrecord.net/radekp/qspectemu/progs/LORDSOCH.Z80" ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
 <prog file="MANIC.Z80"    url="http://activationrecord.net/radekp/qspectemu/progs/MANIC.Z80"    ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
 <prog file="NAVYMOV1.Z80" url="http://activationrecord.net/radekp/qspectemu/progs/NAVYMOV1.Z80" ><binds><bind x="32" y="32" key="16777265" /></binds></prog>
