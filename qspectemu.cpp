@@ -401,7 +401,7 @@ static oskey *findOsKey(int x, int y, bool *good, int *distance)
             min = ki;
         }
     }
-    *good = (minDist * 7 < minDist2 * 2) || minDist > 64 * 64;
+    *good = (minDist * 7 < minDist2 * 2) || minDist > 64 * 64 || minDist2 > 64 * 64;
     *distance = minDist;
     return min;
 }
@@ -1013,6 +1013,7 @@ void QSpectemu::mouseReleaseEvent(QMouseEvent *e)
     {
         int x = oskeys[OSKEYS_SIZE].x = e->x();
         int y = oskeys[OSKEYS_SIZE].y = e->y();
+        int key = oskeys[OSKEYS_SIZE].key;
 
         for(int i = 0; i < OSKEYS_SIZE; i++)
         {
@@ -1037,6 +1038,9 @@ void QSpectemu::mouseReleaseEvent(QMouseEvent *e)
             }
         }
         sortOsKeys();
+        oskeys[OSKEYS_SIZE].x = width() / 2;
+        oskeys[OSKEYS_SIZE].y = height() / 2;
+        oskeys[OSKEYS_SIZE].key = key;
 
         update();
         QTimer::singleShot(1000, this, SLOT(showScreenProgMenu()));
