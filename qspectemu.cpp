@@ -135,7 +135,7 @@ static struct oskey oskeyspng[] = {
     {Qt::Key_J, 426, 216},
     {Qt::Key_K, 480, 216},
     {Qt::Key_L, 535, 216},
-    {Qt::Key_Enter, 590, 216},
+    {Qt::Key_Return, 590, 216},
     {Qt::Key_Shift, 60, 272},
     {Qt::Key_Z, 123, 272},
     {Qt::Key_X, 177, 272},
