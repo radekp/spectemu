@@ -62,7 +62,7 @@ static void vibrate(int level)
         return;
     }
 
-    QFile f("/sys/class/leds/neo1973:vibrator/brightness");
+    QFile f("/sys/class/leds/gta02::vibrator/brightness");
     if(!f.open(QIODevice::WriteOnly))
     {
         return;
@@ -972,7 +972,7 @@ void QSpectemu::mousePressEvent(QMouseEvent *e)
         }
         else if(feedback)
         {
-            vibrate(192);
+            vibrate(48);
             paintKeyLocations = true;
             update();
         }
