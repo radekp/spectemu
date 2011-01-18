@@ -39,12 +39,12 @@ bool QSpectemu::setRes(int xy)
     if(xy == 320240)
     {
         return setres("/sys/bus/spi/devices/spi2.0/state", "qvga-normal", "qvga") ||
-                setres("/sys/bus/spi/devices/spi2.0/resolution", "qvga", "qvga");
+                setres("/sys/class/lcd/jbt6k74-lcd/device/resolution", "qvga", "qvga");
     }
     if(xy == 640480)
     {
         return setres("/sys/bus/spi/devices/spi2.0/state", "normal", "vga") ||
-                setres("/sys/bus/spi/devices/spi2.0/resolution", "vga", "vga");
+                setres("/sys/class/lcd/jbt6k74-lcd/device/resolution", "vga", "vga");
     }
     return false;
 #else
