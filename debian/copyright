@@ -1,0 +1,27 @@
+This work was packaged for Debian by:
+
+    Radek Polak <psonek2@seznam.cz> on Sat, 05 Feb 2011 20:23:56 +0100
+
+It was downloaded from:
+
+    http://sourceforge.net/projects/qtmoko/files
+
+Upstream Author(s):
+
+    Radek Polak <psonek2@seznam.cz>
+
+Copyright:
+
+    Copyright (C) 2009 Trolltech ASA. <info@qtextended.org>
+    Copyright (C) 2011 Radek Polak <psonek2@seznam.cz> 
+
+License:
+
+    GPL-2+
+
+The Debian packaging is:
+
+    Copyright (C) 2011 Radek Polak <psonek2@seznam.cz>
+
+and is licensed under the GPL version 2,
+see "/usr/share/common-licenses/GPL-2".
