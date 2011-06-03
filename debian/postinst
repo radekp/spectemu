@@ -22,7 +22,7 @@ case "$1" in
     configure)
         # rescan .desktop files so that we appear on the list
         . /opt/qtmoko/qpe.env
-        qcop QPE/DocAPI 'scanPath(QString,int)' /opt/qtmoko/apps/Applications 1
+        qcop QPE/DocAPI 'scanPath(QString,int)' /opt/qtmoko/apps/Games 1
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
