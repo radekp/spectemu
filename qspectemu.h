@@ -67,6 +67,9 @@ public:
     QSpectemu(QWidget *parent = 0, Qt::WFlags f = 0);
     ~QSpectemu();
 
+    bool zoom2x;                    // draw the screen 2x zoomed
+    QRect updateRect;               // rectangle on Pixmap to be repainted
+
     void showScreen(QSpectemu::Screen);
     bool setRes(int xy);
     void releaseKeysLater();

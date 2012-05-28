@@ -412,14 +412,36 @@ static void showErr(QWidget *parent, QString err)
     QMessageBox::critical(parent, "qspectemu", err);
 }
 
+static bool isGta02()
+{
+    QFile f("/proc/cpuinfo");
+    if(!f.open(QIODevice::ReadOnly))
+        return false;
+    QByteArray line;
+    bool res = false;
+    for(;;)
+    {
+        line = f.readLine();
+        if(line.isEmpty())
+            break;
+        if(line.contains("Hardware") && line.contains(": GTA02"))
+            res = true;
+    }
+    f.close();
+    return res;
+}
+
 QSpectemu::QSpectemu(QWidget *parent, Qt::WFlags f)
         : QWidget(parent, f)
+        , updateRect()
 {
     Q_UNUSED(f);
 
     setFocusPolicy(Qt::StrongFocus);
     pngKeyDown = false;
     screen = ScreenNone;
+
+    zoom2x = !isGta02();
 
     // Initialize only minimum for fullscreen widget
     if(normalScreenWidget != NULL)
@@ -620,20 +642,20 @@ void QSpectemu::showScreen(QSpectemu::Screen scr)
     }
 
 #if QTOPIA
-    if(scr == ScreenProgRunning && !qvga)
+    if(fullScreen || scr != ScreenProgRunning)
+    {
+        QtopiaApplication::setInputMethodHint(normalScreenWidget, QtopiaApplication::AlwaysOff);
+        QtopiaApplication::setInputMethodHint(fullScreenWidget, QtopiaApplication::AlwaysOff);
+        QtopiaApplication::setInputMethodHint(mainWin, QtopiaApplication::AlwaysOff);
+        QtopiaApplication::instance()->hideInputMethod();
+    }
+    if(!fullScreen && scr == ScreenProgRunning)
     {
         QApplication::processEvents();
         QtopiaApplication::setInputMethodHint(normalScreenWidget, QtopiaApplication::AlwaysOn);
         QtopiaApplication::setInputMethodHint(fullScreenWidget, QtopiaApplication::AlwaysOn);
         QtopiaApplication::setInputMethodHint(mainWin, QtopiaApplication::AlwaysOn);
         QtopiaApplication::instance()->showInputMethod();
-    }
-    if(screen == ScreenProgRunning || screen == ScreenNone)
-    {
-        QtopiaApplication::setInputMethodHint(normalScreenWidget, QtopiaApplication::AlwaysOff);
-        QtopiaApplication::setInputMethodHint(fullScreenWidget, QtopiaApplication::AlwaysOff);
-        QtopiaApplication::setInputMethodHint(mainWin, QtopiaApplication::AlwaysOff);
-        QtopiaApplication::instance()->hideInputMethod();
     }
 #endif
 
@@ -752,6 +774,17 @@ void QSpectemu::paintEvent(QPaintEvent *e)
                 return;
             }
 
+            if(updateRect.isNull())
+                updateRect = rotated ? scrR.rect() : scr.rect();
+            QRect target = updateRect;
+
+            if(zoom2x) {
+                target.moveTop(updateRect.top() * 2);
+                target.moveLeft(updateRect.left() * 2);
+                target.setWidth(updateRect.width() * 2);
+                target.setHeight(updateRect.height() * 2);
+            }
+
             //p.setCompositionMode(QPainter::CompositionMode_Source);
             if(rotated)
             {
@@ -769,12 +802,13 @@ void QSpectemu::paintEvent(QPaintEvent *e)
                         r -= TV_HEIGHT;
                     }
                 }
-                p.drawImage(rect, scrR, rect);
+                p.drawImage(target, scrR, updateRect);
             }
             else
             {
-                p.drawImage(rect, scr, rect);
+                p.drawImage(target, scr, updateRect);
             }
+            updateRect = QRect();
         }
         break;
         case QSpectemu::ScreenKeyboardPng:
@@ -1692,11 +1726,19 @@ void update_screen(void)
 
     if(rotated)
     {
-        qspectemu->update(top, X_OFF, bottom - top + 1, WIDTH);
+        qspectemu->updateRect = QRect(top, X_OFF, bottom - top + 1, WIDTH);
+        if(qspectemu->zoom2x)
+            qspectemu->update(2 * top, 2 * X_OFF, 2 * (bottom - top + 1), 2 * WIDTH);
+        else
+            qspectemu->update(top, X_OFF, bottom - top + 1, WIDTH);
     }
     else
     {
-        qspectemu->update(X_OFF, top, WIDTH, bottom - top + 1);
+        qspectemu->updateRect = QRect(X_OFF, top, WIDTH, bottom - top + 1);
+        if(qspectemu->zoom2x)
+            qspectemu->update(2 * X_OFF, 2 * top, 2 * WIDTH, 2 * (bottom - top + 1));
+        else
+            qspectemu->update(X_OFF, top, WIDTH, bottom - top + 1);
     }
 }
 
