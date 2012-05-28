@@ -27,6 +27,7 @@
 #ifdef QTOPIA
 #include <QSoftMenuBar>
 #include <QtopiaApplication>
+#include <QVibrateAccessory>
 #endif
 
 #include <stdio.h>

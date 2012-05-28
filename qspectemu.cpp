@@ -62,16 +62,11 @@ static void vibrate(int level)
         return;
     }
 
-    QFile f("/sys/class/leds/gta02::vibrator/brightness");
-    if(!f.open(QIODevice::WriteOnly))
-    {
-        return;
-    }
-    char buf[255];
-    sprintf(buf, "%d", level);
-    f.write(buf);
-    f.close();
+#ifdef QTOPIA
+    static QVibrateAccessory vib;
+    vib.setVibrateNow(level);
     lastVibroLevel = level;
+#endif
 }
 
 static void stopVibrating()
@@ -1006,7 +1001,7 @@ void QSpectemu::mousePressEvent(QMouseEvent *e)
         }
         else if(feedback)
         {
-            vibrate(48);
+            vibrate(48 * 256);
             paintKeyLocations = true;
             update();
         }
